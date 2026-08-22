@@ -277,3 +277,55 @@ export async function updateProfile(id: string, data: Partial<BusinessProfile>):
 export async function getCompliancePassport(id: string): Promise<CompliancePassport> {
   return apiFetch<CompliancePassport>(`/profile/${id}/passport`, { method: "GET" });
 }
+
+// ============================================================
+// TKDL Risk Assessment Types & API Callers
+// ============================================================
+
+export interface IngredientInput {
+  name: string;
+  latin_name?: string;
+  percentage?: number;
+}
+
+export interface TKRiskRequest {
+  formulation_name: string;
+  system: string;
+  ingredients: IngredientInput[];
+  proposed_claims?: string;
+}
+
+export interface TKMatchResult {
+  ingredient_name: string;
+  traditional_name: string;
+  latin_name: string;
+  system: string;
+  tkdl_reference: string;
+  classical_text_source: string;
+  risk_factor: "HIGH_PRIOR_ART" | "MODERATE" | "LOW";
+  known_therapeutic_use: string;
+}
+
+export interface TKRiskResponse {
+  formulation_name: string;
+  system: string;
+  overall_risk_score: number;
+  risk_level: "HIGH_RISK" | "MODERATE_RISK" | "LOW_RISK";
+  matched_entries: TKMatchResult[];
+  patentability_assessment: string;
+  key_recommendations: string[];
+  section_3p_compliance_status: string;
+}
+
+/** Assess Traditional Knowledge (TKDL) & Section 3(p) Patent Risk */
+export async function assessTKRisk(request: TKRiskRequest): Promise<TKRiskResponse> {
+  return apiFetch<TKRiskResponse>("/tk-risk/assess", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
+
+/** Fetch list of reference AYUSH herbs for autocompletion */
+export async function getReferenceHerbs(): Promise<string[]> {
+  return apiFetch<string[]>("/tk-risk/reference-herbs", { method: "GET" });
+}

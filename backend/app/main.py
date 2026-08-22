@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.core.database import init_db
-from app.routers import chat, document, feedback, profile, sources, upload
+from app.routers import chat, document, feedback, profile, sources, tk_risk, upload
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -150,6 +150,7 @@ async def health():
     }
 
 
+
 # ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
@@ -159,6 +160,7 @@ app.include_router(document.router, prefix="/api", tags=["document"])
 app.include_router(sources.router, prefix="/api", tags=["sources"])
 app.include_router(feedback.router, prefix="/api", tags=["feedback"])
 app.include_router(profile.router, prefix="/api", tags=["profile"])
+app.include_router(tk_risk.router, prefix="/api", tags=["tk-risk"])
 
 
 

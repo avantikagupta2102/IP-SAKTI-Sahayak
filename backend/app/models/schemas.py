@@ -216,3 +216,44 @@ class CompliancePassportResponse(BaseModel):
     recommended_actions: List[str] = Field(default_factory=list)
     next_filing_deadline: Optional[str] = None
 
+
+# ============================================================
+# TKDL Risk Assessment Schemas (POST /api/tk-risk/assess)
+# ============================================================
+
+
+class IngredientInput(BaseModel):
+    name: str = Field(..., min_length=1, description="Common or traditional herb name e.g. Ashwagandha")
+    latin_name: Optional[str] = Field(None, description="Botanical name e.g. Withania somnifera")
+    percentage: Optional[float] = Field(None, description="Composition percentage")
+
+
+class TKRiskRequest(BaseModel):
+    formulation_name: str = Field(..., min_length=1, max_length=256)
+    system: str = Field(default="Ayurveda", description="Ayurveda | Siddha | Unani | Polyherbal")
+    ingredients: List[IngredientInput] = Field(..., min_items=1)
+    proposed_claims: Optional[str] = Field(None, description="Intended therapeutic benefit or product claim")
+
+
+class TKMatchResult(BaseModel):
+    ingredient_name: str
+    traditional_name: str
+    latin_name: str
+    system: str
+    tkdl_reference: str
+    classical_text_source: str
+    risk_factor: str = Field(description="HIGH_PRIOR_ART | MODERATE | LOW")
+    known_therapeutic_use: str
+
+
+class TKRiskResponse(BaseModel):
+    formulation_name: str
+    system: str
+    overall_risk_score: int = Field(description="Section 3(p) Patent Rejection Risk (0-100)")
+    risk_level: str = Field(description="HIGH_RISK | MODERATE_RISK | LOW_RISK")
+    matched_entries: List[TKMatchResult] = Field(default_factory=list)
+    patentability_assessment: str
+    key_recommendations: List[str] = Field(default_factory=list)
+    section_3p_compliance_status: str
+
+
