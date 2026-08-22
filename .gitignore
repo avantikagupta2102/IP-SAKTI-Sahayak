@@ -39,8 +39,8 @@ backend/ip_sakti.db
 backend/data/chroma_db/
 
 # Raw PDFs (add your own — not committed)
-backend/data/pdfs/
-!backend/data/pdfs/.gitkeep
+backend/data/samples/
+!backend/data/samples/.gitkeep
 
 # Sentence-transformers model cache
 backend/.model_cache/

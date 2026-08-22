@@ -279,8 +279,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pdf-dir",
         type=Path,
-        default=Path("data/pdfs"),
-        help="Directory containing PDFs to ingest (default: data/pdfs)",
+        default=Path("data/samples"),
+        help="Directory containing PDFs to ingest (default: data/samples)",
     )
     parser.add_argument(
         "--chunk-size",
