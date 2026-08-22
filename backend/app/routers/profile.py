@@ -139,17 +139,21 @@ async def update_profile(profile_id: str, payload: BusinessProfileUpdate, db: As
 
 @router.get("/profile/{profile_id}/passport", response_model=CompliancePassportResponse, summary="Get Computed Compliance Passport")
 async def get_compliance_passport(profile_id: str, db: AsyncSession = Depends(get_db)) -> CompliancePassportResponse:
-    """
-    Derive a computed 'Compliance Passport' summarizing the business's IP status,
-    regulatory score, asset metrics, and actionable compliance checklist.
-    """
+    """Retrieve computed Compliance Passport for a given business profile."""
     profile = await db.get(BusinessProfile, profile_id)
     if not profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Business Profile with ID '{profile_id}' not found.",
         )
+    return calculate_passport_for_profile(profile)
 
+
+def calculate_passport_for_profile(profile: BusinessProfile) -> CompliancePassportResponse:
+    """
+    Derive a computed 'Compliance Passport' summarizing the business's IP status,
+    regulatory score, asset metrics, and actionable compliance checklist.
+    """
     try:
         assets_raw = json.loads(profile.ip_assets_json or "[]")
         ip_assets = [IPAssetSchema(**a) for a in assets_raw]

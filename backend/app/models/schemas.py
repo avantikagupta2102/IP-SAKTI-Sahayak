@@ -336,5 +336,28 @@ class CalendarEventsResponse(BaseModel):
     events: List[ComplianceEventResponse]
 
 
+# ============================================================
+# AI Expert Brief Schemas (POST /api/expert-brief)
+# ============================================================
+
+
+class ExpertBriefRequest(BaseModel):
+    profile_id: str = Field(..., description="ID of BusinessProfile to evaluate")
+
+
+class ExpertBriefResponse(BaseModel):
+    profile_id: str
+    company_name: str
+    sector: str
+    company_type: str
+    generated_at: str
+    compliance_score: int
+    status_level: str
+    brief_markdown: str
+    key_takeaways: List[str] = Field(default_factory=list)
+    next_milestones: List[str] = Field(default_factory=list)
+
+
+
 
 

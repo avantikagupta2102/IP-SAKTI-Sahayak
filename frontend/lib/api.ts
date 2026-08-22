@@ -449,3 +449,32 @@ export async function updateCalendarEvent(id: string, data: ComplianceEventUpdat
 export async function deleteCalendarEvent(id: string): Promise<void> {
   return apiFetch<void>(`/calendar/event/${id}`, { method: "DELETE" });
 }
+
+// ============================================================
+// AI Expert Brief Types & API Callers
+// ============================================================
+
+export interface ExpertBriefRequest {
+  profile_id: string;
+}
+
+export interface ExpertBriefResponse {
+  profile_id: string;
+  company_name: string;
+  sector: string;
+  company_type: string;
+  generated_at: string;
+  compliance_score: number;
+  status_level: string;
+  brief_markdown: string;
+  key_takeaways: string[];
+  next_milestones: string[];
+}
+
+/** Generate executive AI Expert Brief document */
+export async function generateExpertBrief(data: ExpertBriefRequest): Promise<ExpertBriefResponse> {
+  return apiFetch<ExpertBriefResponse>("/expert-brief", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
