@@ -36,8 +36,13 @@ async def submit_feedback(
         )
 
     message.rating = request.rating
+    if request.comment is not None:
+        message.feedback_comment = request.comment
+
+    await db.commit()
+
     logger.info(
-        f"Feedback recorded: message={request.message_id} rating={request.rating}"
+        f"Feedback recorded: message={request.message_id} rating={request.rating} comment={request.comment}"
     )
 
     return FeedbackResponse(ok=True, message_id=request.message_id)

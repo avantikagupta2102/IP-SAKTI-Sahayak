@@ -68,6 +68,7 @@ class Message(Base):
     confidence: Mapped[str] = mapped_column(String(16), nullable=True)  # HIGH/MEDIUM/LOW
     confidence_score: Mapped[float] = mapped_column(Float, nullable=True)
     rating: Mapped[int] = mapped_column(Integer, nullable=True)        # 1 = 👍, -1 = 👎
+    feedback_comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Optional user feedback comment
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     conversation: Mapped["Conversation"] = relationship(

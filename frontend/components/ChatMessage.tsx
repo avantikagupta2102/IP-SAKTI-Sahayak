@@ -37,18 +37,28 @@ function UserBubble({ text }: { text: string }) {
 
 function AssistantBubble({ data }: { data: ChatResponse }) {
   const [rating, setRating] = useState<1 | -1 | null>(null);
+  const [comment, setComment] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
 
   const lowConfidence = data.confidence === "LOW";
 
   const handleFeedback = async (r: 1 | -1) => {
-    if (feedbackSent) return;
     setRating(r);
     setFeedbackSent(true);
     try {
-      await submitFeedback({ message_id: data.message_id, rating: r });
+      await submitFeedback({ message_id: data.message_id, rating: r, comment: comment || undefined });
     } catch (e) {
       console.warn("Feedback submission failed", e);
+    }
+  };
+
+  const handleSendComment = async () => {
+    if (!rating) return;
+    try {
+      await submitFeedback({ message_id: data.message_id, rating: rating, comment: comment });
+      setFeedbackSent(true);
+    } catch (e) {
+      console.warn("Comment submission failed", e);
     }
   };
 
@@ -89,32 +99,50 @@ function AssistantBubble({ data }: { data: ChatResponse }) {
         />
 
         {/* Feedback */}
-        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-slate-700/50">
-          <span className="text-xs text-slate-500">Was this helpful?</span>
-          <button
-            onClick={() => handleFeedback(1)}
-            disabled={feedbackSent}
-            className={`text-sm transition-all ${
-              rating === 1 ? "opacity-100" : "opacity-40 hover:opacity-80"
-            } disabled:cursor-default`}
-            aria-label="Thumbs up"
-            id={`thumbs-up-${data.message_id}`}
-          >
-            👍
-          </button>
-          <button
-            onClick={() => handleFeedback(-1)}
-            disabled={feedbackSent}
-            className={`text-sm transition-all ${
-              rating === -1 ? "opacity-100" : "opacity-40 hover:opacity-80"
-            } disabled:cursor-default`}
-            aria-label="Thumbs down"
-            id={`thumbs-down-${data.message_id}`}
-          >
-            👎
-          </button>
-          {feedbackSent && (
-            <span className="text-xs text-slate-500 ml-1">Thanks for your feedback!</span>
+        <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-slate-700/50">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500">Was this helpful?</span>
+            <button
+              onClick={() => handleFeedback(1)}
+              className={`text-sm transition-all ${
+                rating === 1 ? "opacity-100 scale-110" : "opacity-40 hover:opacity-80"
+              }`}
+              aria-label="Thumbs up"
+              id={`thumbs-up-${data.message_id}`}
+            >
+              👍
+            </button>
+            <button
+              onClick={() => handleFeedback(-1)}
+              className={`text-sm transition-all ${
+                rating === -1 ? "opacity-100 scale-110" : "opacity-40 hover:opacity-80"
+              }`}
+              aria-label="Thumbs down"
+              id={`thumbs-down-${data.message_id}`}
+            >
+              👎
+            </button>
+            {feedbackSent && (
+              <span className="text-xs text-slate-400 ml-1">Thanks for your feedback!</span>
+            )}
+          </div>
+
+          {rating !== null && (
+            <div className="flex gap-2 text-xs pt-1">
+              <input
+                type="text"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Optional feedback comment..."
+                className="w-full px-3 py-1.5 bg-slate-900/60 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-xs"
+              />
+              <button
+                onClick={handleSendComment}
+                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-xs transition-colors flex-shrink-0"
+              >
+                Send
+              </button>
+            </div>
           )}
         </div>
       </div>

@@ -26,15 +26,27 @@ export default function MessageBubble({
   onSelectEvidence,
 }: MessageProps) {
   const [rating, setRating] = useState<number | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [commentSubmitted, setCommentSubmitted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const handleRating = async (value: 1 | -1) => {
     if (rating === value) return;
     setRating(value);
     try {
-      await submitFeedback({ message_id: id, rating: value });
+      await submitFeedback({ message_id: id, rating: value, comment: feedbackComment || undefined });
     } catch {
       // Ignore background rating errors
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!rating) return;
+    try {
+      await submitFeedback({ message_id: id, rating: rating as 1 | -1, comment: feedbackComment });
+      setCommentSubmitted(true);
+    } catch {
+      // Ignore errors
     }
   };
 
@@ -145,28 +157,55 @@ export default function MessageBubble({
 
         {/* Assistant Feedback Controls */}
         {role === "assistant" && (
-          <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Grounding verified against Indian Statutes</span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handleRating(1)}
-                className={`p-1 rounded hover:bg-slate-100 transition-colors ${
-                  rating === 1 ? "text-emerald-600 font-bold" : "text-slate-400"
-                }`}
-                title="Helpful response"
-              >
-                <ThumbsUp size={13} />
-              </button>
-              <button
-                onClick={() => handleRating(-1)}
-                className={`p-1 rounded hover:bg-slate-100 transition-colors ${
-                  rating === -1 ? "text-rose-600 font-bold" : "text-slate-400"
-                }`}
-                title="Unhelpful response"
-              >
-                <ThumbsDown size={13} />
-              </button>
+          <div className="mt-3 pt-2 border-t border-slate-100 flex flex-col gap-2 text-[11px] text-slate-400">
+            <div className="flex items-center justify-between">
+              <span>Grounding verified against Indian Statutes</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleRating(1)}
+                  className={`p-1 rounded hover:bg-slate-100 transition-colors flex items-center gap-1 ${
+                    rating === 1 ? "text-emerald-600 font-bold bg-emerald-50" : "text-slate-400"
+                  }`}
+                  title="Helpful response"
+                >
+                  <ThumbsUp size={13} />
+                  {rating === 1 && <span>Helpful</span>}
+                </button>
+                <button
+                  onClick={() => handleRating(-1)}
+                  className={`p-1 rounded hover:bg-slate-100 transition-colors flex items-center gap-1 ${
+                    rating === -1 ? "text-rose-600 font-bold bg-rose-50" : "text-slate-400"
+                  }`}
+                  title="Needs improvement"
+                >
+                  <ThumbsDown size={13} />
+                  {rating === -1 && <span>Unhelpful</span>}
+                </button>
+              </div>
             </div>
+
+            {/* Optional Comment Input Drawer */}
+            {rating !== null && (
+              <div className="pt-2 flex flex-col gap-1.5 animate-in fade-in duration-150">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={feedbackComment}
+                    onChange={(e) => setFeedbackComment(e.target.value)}
+                    placeholder={rating === 1 ? "What made this response helpful? (optional)" : "How can this response be improved? (optional)"}
+                    className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                  />
+                  <button
+                    onClick={handleSubmitComment}
+                    disabled={commentSubmitted}
+                    className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-600 disabled:bg-slate-300 text-white font-bold rounded-lg flex items-center gap-1 text-[11px] flex-shrink-0 transition-colors"
+                  >
+                    <span>{commentSubmitted ? "Saved" : "Send"}</span>
+                  </button>
+                </div>
+                {commentSubmitted && <span className="text-[10px] text-emerald-600 font-semibold">Thank you for helping improve answer grounding accuracy!</span>}
+              </div>
+            )}
           </div>
         )}
       </div>
