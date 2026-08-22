@@ -62,8 +62,8 @@ export default function AppShell({ children }: Props) {
   return (
     <div className="flex h-dvh bg-slate-50 text-slate-900 font-sans overflow-hidden">
       {/* ── Persistent Left Navigation Sidebar ── */}
-      <aside className="w-64 bg-[#0c1911] text-white flex flex-col justify-between p-4 flex-shrink-0 border-r border-emerald-950">
-        <div>
+      <aside className="w-64 bg-[#0c1911] text-white flex flex-col justify-between p-4 flex-shrink-0 border-r border-emerald-950 h-full overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col overflow-y-auto pr-1">
           {/* Logo Brand */}
           <div className="flex items-center gap-3 px-2 py-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-900/50">
