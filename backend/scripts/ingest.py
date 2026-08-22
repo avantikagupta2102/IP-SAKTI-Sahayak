@@ -224,6 +224,9 @@ async def ingest(
             if existing and not force:
                 logger.info(f"  ℹ️  Source already in DB — skipping (use --force to re-ingest).")
             else:
+                if existing:
+                    await db.delete(existing)
+                    await db.flush()
                 source = Source(
                     id=source_id,
                     title=merged_meta.get("document_title") or merged_meta.get("title", pdf_path.stem),
@@ -234,7 +237,8 @@ async def ingest(
                     language=merged_meta.get("language", "en"),
                     publication_date=merged_meta.get("publication_date"),
                 )
-                await db.merge(source)
+                db.add(source)
+                await db.flush()
 
             # --- Chunk ---
             chunks = chunk_text(text, chunk_size=chunk_size, overlap=overlap)

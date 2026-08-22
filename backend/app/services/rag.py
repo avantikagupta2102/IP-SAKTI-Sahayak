@@ -94,6 +94,23 @@ Answer text:
 
 def _extract_actions(answer: str) -> List[Action]:
     """Parse next steps from the LLM answer into structured Action objects."""
+    import re
+    # 1. Fast regex extraction from text (prevents double LLM call latency)
+    regex_actions: List[Action] = []
+    lines = answer.split("\n")
+    for line in lines:
+        line_s = line.strip()
+        m = re.match(r"^(?:Step\s*)?(\d+)[\.\:\)]\s*(.*)", line_s, re.IGNORECASE)
+        if m:
+            step_num = int(m.group(1))
+            desc = m.group(2).strip()
+            if desc and len(desc) > 5:
+                regex_actions.append(Action(step=step_num, description=desc, required_documents=[]))
+
+    if regex_actions:
+        return regex_actions[:5]
+
+    # 2. LLM fallback if regex found no steps
     try:
         raw = complete_json(
             _ACTION_EXTRACTION_PROMPT.format(answer=answer[:2000]),
