@@ -551,3 +551,43 @@ export async function generateDigitalNDA(data: NDARequest): Promise<NDAResponse>
     body: JSON.stringify(data),
   });
 }
+
+// ============================================================
+// Multilingual Legal Translation Types & API Callers
+// ============================================================
+
+export interface TranslateDocRequest {
+  document_text: string;
+  target_language: string;
+}
+
+export interface TranslateDocResponse {
+  target_language: string;
+  translated_document_text: string;
+}
+
+export interface VoiceToAbstractRequest {
+  colloquial_speech_text: string;
+  source_language: string;
+}
+
+export interface VoiceToAbstractResponse {
+  source_language: string;
+  technical_patent_abstract_en: string;
+}
+
+/** Translate legal document into target vernacular language */
+export async function translateLegalDocument(data: TranslateDocRequest): Promise<TranslateDocResponse> {
+  return apiFetch<TranslateDocResponse>("/language/translate-doc", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/** Convert vernacular speech dictation to structured technical patent abstract */
+export async function convertVoiceToAbstract(data: VoiceToAbstractRequest): Promise<VoiceToAbstractResponse> {
+  return apiFetch<VoiceToAbstractResponse>("/language/voice-to-patent-abstract", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
