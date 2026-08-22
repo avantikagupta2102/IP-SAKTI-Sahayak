@@ -290,4 +290,51 @@ class RegulationImpactResponse(BaseModel):
     regulations: List[RegulationItem]
 
 
+# ============================================================
+# Compliance Deadline Calendar Schemas (/api/calendar/event)
+# ============================================================
+
+
+class ComplianceEventCreate(BaseModel):
+    profile_id: Optional[str] = None
+    title: str = Field(..., min_length=1, max_length=256)
+    category: str = Field(default="PATENT", description="PATENT | TRADEMARK | AYUSH_LICENSE | BIODIVERSITY | GENERAL")
+    due_date: str = Field(..., description="ISO Date string YYYY-MM-DD")
+    status: str = Field(default="UPCOMING", description="UPCOMING | OVERDUE | DONE")
+    description: Optional[str] = None
+    authority: Optional[str] = Field(None, description="e.g. CGPDTM, State AYUSH Authority, NBA")
+
+
+class ComplianceEventUpdate(BaseModel):
+    profile_id: Optional[str] = None
+    title: Optional[str] = None
+    category: Optional[str] = None
+    due_date: Optional[str] = None
+    status: Optional[str] = None
+    description: Optional[str] = None
+    authority: Optional[str] = None
+
+
+class ComplianceEventResponse(BaseModel):
+    id: str
+    profile_id: Optional[str] = None
+    title: str
+    category: str
+    due_date: str
+    status: str
+    description: Optional[str] = None
+    authority: Optional[str] = None
+    created_at: str
+    updated_at: str
+
+
+class CalendarEventsResponse(BaseModel):
+    total: int
+    upcoming_count: int
+    overdue_count: int
+    done_count: int
+    events: List[ComplianceEventResponse]
+
+
+
 

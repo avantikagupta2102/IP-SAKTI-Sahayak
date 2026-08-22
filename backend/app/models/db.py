@@ -9,6 +9,7 @@ Tables:
 """
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -103,4 +104,22 @@ class BusinessProfile(Base):
     ip_assets_json: Mapped[str] = mapped_column(Text, default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ComplianceEvent(Base):
+    """Compliance deadline event tied to a business profile."""
+
+    __tablename__ = "compliance_events"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    profile_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    title: Mapped[str] = mapped_column(String(256), nullable=False)
+    category: Mapped[str] = mapped_column(String(128), default="PATENT")  # PATENT, TRADEMARK, AYUSH_LICENSE, BIODIVERSITY, GENERAL
+    due_date: Mapped[str] = mapped_column(String(32), nullable=False)  # YYYY-MM-DD
+    status: Mapped[str] = mapped_column(String(32), default="UPCOMING")  # UPCOMING, OVERDUE, DONE
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    authority: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 

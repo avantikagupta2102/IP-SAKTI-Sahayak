@@ -12,6 +12,7 @@ import {
   Sparkles,
   Shield,
   BookOpen,
+  Calendar as CalendarIcon,
   Clock
 } from "lucide-react";
 import { getUser, clearUser, UserProfile } from "@/lib/auth";
@@ -118,6 +119,17 @@ export default function AppShell({ children }: Props) {
             >
               <BookOpen size={18} className={pathname === "/regulations" ? "text-emerald-400" : ""} />
               <span>IP Regulations</span>
+            </button>
+            <button
+              onClick={() => router.push("/calendar")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                pathname === "/calendar"
+                  ? "bg-emerald-700/40 text-emerald-300 border border-emerald-600/50 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+              }`}
+            >
+              <CalendarIcon size={18} className={pathname === "/calendar" ? "text-emerald-400" : ""} />
+              <span>Deadline Calendar</span>
             </button>
             <button
               onClick={() => router.push("/chat")}

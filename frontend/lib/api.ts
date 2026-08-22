@@ -373,3 +373,79 @@ export async function getRegulationsImpact(profileId: string): Promise<Regulatio
     method: "GET",
   });
 }
+
+// ============================================================
+// Compliance Deadline Calendar Types & API Callers
+// ============================================================
+
+export interface ComplianceEvent {
+  id: string;
+  profile_id?: string;
+  title: string;
+  category: "PATENT" | "TRADEMARK" | "AYUSH_LICENSE" | "BIODIVERSITY" | "GENERAL" | string;
+  due_date: string;
+  status: "UPCOMING" | "OVERDUE" | "DONE" | string;
+  description?: string;
+  authority?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ComplianceEventCreate {
+  profile_id?: string;
+  title: string;
+  category?: string;
+  due_date: string;
+  status?: string;
+  description?: string;
+  authority?: string;
+}
+
+export interface ComplianceEventUpdate {
+  profile_id?: string;
+  title?: string;
+  category?: string;
+  due_date?: string;
+  status?: string;
+  description?: string;
+  authority?: string;
+}
+
+export interface CalendarEventsResponse {
+  total: number;
+  upcoming_count: number;
+  overdue_count: number;
+  done_count: number;
+  events: ComplianceEvent[];
+}
+
+/** Create a new compliance deadline event */
+export async function createCalendarEvent(data: ComplianceEventCreate): Promise<ComplianceEvent> {
+  return apiFetch<ComplianceEvent>("/calendar/event", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/** List compliance deadline events */
+export async function getCalendarEvents(profileId?: string, status?: string): Promise<CalendarEventsResponse> {
+  const query = new URLSearchParams();
+  if (profileId) query.set("profile_id", profileId);
+  if (status) query.set("status", status);
+  const qStr = query.toString() ? `?${query.toString()}` : "";
+
+  return apiFetch<CalendarEventsResponse>(`/calendar/event${qStr}`, { method: "GET" });
+}
+
+/** Update compliance deadline event details or status */
+export async function updateCalendarEvent(id: string, data: ComplianceEventUpdate): Promise<ComplianceEvent> {
+  return apiFetch<ComplianceEvent>(`/calendar/event/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+/** Delete compliance deadline event by ID */
+export async function deleteCalendarEvent(id: string): Promise<void> {
+  return apiFetch<void>(`/calendar/event/${id}`, { method: "DELETE" });
+}
