@@ -103,6 +103,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 # Health check
 # ---------------------------------------------------------------------------
 @app.get("/health", tags=["system"], summary="Health check")
+@app.get("/api/health", tags=["system"], summary="Health check")
 async def health():
     """Returns API status and basic diagnostics."""
     import httpx
