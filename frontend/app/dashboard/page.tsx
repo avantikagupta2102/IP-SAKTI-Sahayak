@@ -19,6 +19,7 @@ import AppShell from "@/components/layout/AppShell";
 import WizardModal from "@/components/dashboard/WizardModal";
 import { getUser, greeting, UserProfile } from "@/lib/auth";
 import { getAllSessions, HistorySession } from "@/lib/history";
+import { useLanguage } from "@/context/LanguageContext";
 
 const IP_TYPES = [
   {
@@ -56,6 +57,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showWizard, setShowWizard] = useState(false);
   const [history, setHistory] = useState<HistorySession[]>([]);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const u = getUser();
@@ -68,6 +70,37 @@ export default function DashboardPage() {
   }, [router]);
 
   if (!user) return null;
+
+  const dynamicIpTypes = [
+    {
+      id: "patent",
+      icon: "🔬",
+      title: t("patent_protection", "Patent Protection"),
+      desc: t("patent_desc", "Inventions, chemical & Ayurvedic processes, formulations"),
+      prompt: "I want to check patent eligibility for my technical invention under the Indian Patents Act 1970."
+    },
+    {
+      id: "trademark",
+      icon: "™️",
+      title: t("trademark_brand", "Trademark & Brand"),
+      desc: t("trademark_desc", "Brand names, logos, slogans, Class 5 pharmaceuticals"),
+      prompt: "How do I register a Trademark for my AYUSH brand under the Trade Marks Act 1999?"
+    },
+    {
+      id: "copyright",
+      icon: "©️",
+      title: t("copyright_content", "Copyright & Content"),
+      desc: t("copyright_desc", "Manuals, software code, label artwork, research papers"),
+      prompt: "What is the procedure for registering Copyright for my product documentation in India?"
+    },
+    {
+      id: "tk",
+      icon: "🌿",
+      title: t("traditional_knowledge", "Traditional Knowledge"),
+      desc: t("tk_desc", "Herbal formulations, TKDL prior-art, Section 3(p) compliance"),
+      prompt: "How do I ensure my herbal formulation complies with TKDL and Section 3(p) of the Patents Act?"
+    }
+  ];
 
   return (
     <AppShell>
@@ -95,19 +128,19 @@ export default function DashboardPage() {
             className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-all hover:scale-105 flex-shrink-0 relative z-10"
           >
             <Sparkles size={16} />
-            <span>"What IP Do I Need?" Wizard</span>
+            <span>{t("wizard_button", '"What IP Do I Need?" Wizard')}</span>
           </button>
         </div>
 
         {/* ── 2. Quick Action Feature Grid ── */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-900">Select IP Protection Category</h2>
-            <span className="text-xs text-slate-500">Click a card to launch a guided AI consultation</span>
+            <h2 className="text-base font-bold text-slate-900">{t("select_ip_category", "Select IP Protection Category")}</h2>
+            <span className="text-xs text-slate-500">{t("click_card_consultation", "Click a card to launch a guided AI consultation")}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {IP_TYPES.map((card) => (
+            {dynamicIpTypes.map((card) => (
               <div
                 key={card.id}
                 onClick={() => router.push(`/chat?prompt=${encodeURIComponent(card.prompt)}`)}
@@ -122,7 +155,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-700">
-                  <span>Start Consultation</span>
+                  <span>{t("start_consultation", "Start Consultation")}</span>
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
@@ -142,13 +175,13 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 group-hover:text-emerald-700">
-                Ask Legal &amp; AYUSH Advisor
+                {t("ask_legal_ayush", "Ask Legal & AYUSH Advisor")}
               </h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Type natural queries about patent validity, trademark class search, Form 25-D renewal, or label claims.
+                {t("ask_legal_desc", "Type natural queries about patent validity, trademark class search, Form 25-D renewal, or label claims.")}
               </p>
               <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 mt-3">
-                Open Prompt Interface <ArrowRight size={13} />
+                {t("open_prompt_interface", "Open Prompt Interface")} <ArrowRight size={13} />
               </span>
             </div>
           </div>
@@ -163,13 +196,13 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="font-bold text-base text-slate-900 group-hover:text-amber-700">
-                Scan Government Notice / PDF
+                {t("scan_notice_pdf", "Scan Government Notice / PDF")}
               </h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Upload a Trademark Examination Report, Patent Office Action, or label artwork to extract requirements.
+                {t("scan_notice_desc", "Upload a Trademark Examination Report, Patent Office Action, or label artwork to extract requirements.")}
               </p>
               <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 mt-3">
-                Upload &amp; Analyze PDF <ArrowRight size={13} />
+                {t("upload_analyze_pdf", "Upload & Analyze PDF")} <ArrowRight size={13} />
               </span>
             </div>
           </div>

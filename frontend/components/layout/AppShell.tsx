@@ -22,6 +22,8 @@ import LanguageSelector from "@/components/shared/LanguageSelector";
 import StatusDot from "@/components/shared/StatusDot";
 import HistorySidebar from "@/components/chat/HistorySidebar";
 
+import { useLanguage } from "@/context/LanguageContext";
+
 interface Props {
   children: React.ReactNode;
 }
@@ -30,7 +32,7 @@ export default function AppShell({ children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [currentLang, setCurrentLang] = useState("en");
+  const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
     const u = getUser();
@@ -38,7 +40,6 @@ export default function AppShell({ children }: Props) {
       router.push("/login");
     } else if (u) {
       setUser(u);
-      setCurrentLang(u.language || "en");
     }
   }, [pathname, router]);
 
@@ -48,11 +49,9 @@ export default function AppShell({ children }: Props) {
   };
 
   const handleLangChange = (code: string) => {
-    setCurrentLang(code);
+    setLanguage(code);
     if (user) {
-      const updated = { ...user, language: code };
-      setUser(updated);
-      localStorage.setItem("ipsakti_user", JSON.stringify(updated));
+      setUser({ ...user, language: code });
     }
   };
 
@@ -87,7 +86,7 @@ export default function AppShell({ children }: Props) {
               }`}
             >
               <LayoutDashboard size={18} className={pathname === "/dashboard" ? "text-emerald-400" : ""} />
-              <span>Dashboard</span>
+              <span>{t("dashboard", "Dashboard")}</span>
             </button>
             <button
               onClick={() => router.push("/passport")}
@@ -98,7 +97,7 @@ export default function AppShell({ children }: Props) {
               }`}
             >
               <Shield size={18} className={pathname === "/passport" ? "text-emerald-400" : ""} />
-              <span>Compliance Passport</span>
+              <span>{t("compliance_passport", "Compliance Passport")}</span>
             </button>
             <button
               onClick={() => router.push("/tk-risk")}
@@ -109,7 +108,7 @@ export default function AppShell({ children }: Props) {
               }`}
             >
               <Leaf size={18} className={pathname === "/tk-risk" ? "text-emerald-400" : ""} />
-              <span>TKDL Risk Assessor</span>
+              <span>{t("tkdl_assessor", "TKDL Risk Assessor")}</span>
             </button>
             <button
               onClick={() => router.push("/regulations")}
@@ -120,7 +119,7 @@ export default function AppShell({ children }: Props) {
               }`}
             >
               <BookOpen size={18} className={pathname === "/regulations" ? "text-emerald-400" : ""} />
-              <span>IP Regulations</span>
+              <span>{t("ip_regulations", "IP Regulations")}</span>
             </button>
             <button
               onClick={() => router.push("/calendar")}
@@ -131,7 +130,7 @@ export default function AppShell({ children }: Props) {
               }`}
             >
               <CalendarIcon size={18} className={pathname === "/calendar" ? "text-emerald-400" : ""} />
-              <span>Deadline Calendar</span>
+              <span>{t("deadline_calendar", "Deadline Calendar")}</span>
             </button>
             <button
               onClick={() => router.push("/expert-brief")}
@@ -142,7 +141,7 @@ export default function AppShell({ children }: Props) {
               }`}
             >
               <FileText size={18} className={pathname === "/expert-brief" ? "text-emerald-400" : ""} />
-              <span>Expert Brief</span>
+              <span>{t("expert_brief", "Expert Brief")}</span>
             </button>
             <button
               onClick={() => router.push("/investor-match")}
@@ -153,7 +152,7 @@ export default function AppShell({ children }: Props) {
               }`}
             >
               <TrendingUp size={18} className={pathname === "/investor-match" ? "text-emerald-400" : ""} />
-              <span>Investor Match</span>
+              <span>{t("investor_match", "Investor Match")}</span>
             </button>
             <button
               onClick={() => router.push("/chat")}
@@ -164,7 +163,7 @@ export default function AppShell({ children }: Props) {
               }`}
             >
               <MessageSquare size={18} className={pathname === "/chat" ? "text-emerald-400" : ""} />
-              <span>Ask AI Advisor</span>
+              <span>{t("ask_ai_advisor", "Ask AI Advisor")}</span>
             </button>
           </nav>
 
@@ -194,7 +193,7 @@ export default function AppShell({ children }: Props) {
             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-950/20 transition-colors"
           >
             <LogOut size={14} />
-            <span>Sign Out</span>
+            <span>{t("sign_out", "Sign Out")}</span>
           </button>
         </div>
       </aside>
@@ -204,15 +203,15 @@ export default function AppShell({ children }: Props) {
         <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 flex-shrink-0">
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-bold text-slate-900">
-              {pathname === "/dashboard" ? "Compliance & IP Dashboard" : "AI Legal & AYUSH Consultation"}
+              {pathname === "/dashboard" ? t("dashboard", "Compliance & IP Dashboard") : t("ask_ai_advisor", "AI Legal & AYUSH Consultation")}
             </h2>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Multilingual Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500">Language:</span>
-              <LanguageSelector value={currentLang} onChange={handleLangChange} />
+              <span className="text-xs font-semibold text-slate-500">{t("language_label", "Language:")}</span>
+              <LanguageSelector value={language} onChange={handleLangChange} />
             </div>
 
             {/* Profile Avatar Chip */}
