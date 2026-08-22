@@ -5,6 +5,7 @@ import { Send, UploadCloud, Sparkles, Mic, MicOff, RefreshCw, X, Scale, Shield, 
 import { sendChat, uploadDocument, analyzeDocument, SourceRef, ChatResponse } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { upsertSession, makeTitle, getSession } from "@/lib/history";
+import LanguageSelector from "@/components/shared/LanguageSelector";
 import MessageBubble from "./MessageBubble";
 
 const QUICK_PROMPTS = [
@@ -23,6 +24,7 @@ interface Message {
   confidenceScore?: number;
   actions?: any[];
   timestamp: string;
+  detectedLanguage?: string;
 }
 
 interface Props {
@@ -33,6 +35,7 @@ interface Props {
 export default function ChatPanel({ initialPrompt, sessionId }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputQuery, setInputQuery] = useState("");
+  const [selectedLang, setSelectedLang] = useState<string>(getUser()?.language || "en");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | undefined>(sessionId || undefined);
   const [isListening, setIsListening] = useState(false);
@@ -117,11 +120,10 @@ export default function ChatPanel({ initialPrompt, sessionId }: Props) {
     setIsLoading(true);
 
     try {
-      const userObj = getUser();
       const resp: ChatResponse = await sendChat({
         query: text,
         conversation_id: conversationId,
-        language: userObj?.language || "en",
+        language: selectedLang,
       });
 
       const currentConvId = conversationId || resp.conversation_id;
@@ -137,6 +139,7 @@ export default function ChatPanel({ initialPrompt, sessionId }: Props) {
         confidence: resp.confidence,
         confidenceScore: resp.confidence_score,
         actions: resp.actions,
+        detectedLanguage: resp.detected_language,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
@@ -259,6 +262,7 @@ export default function ChatPanel({ initialPrompt, sessionId }: Props) {
                 <MessageBubble
                   key={msg.id}
                   {...msg}
+                  detectedLanguage={msg.detectedLanguage}
                   onSelectEvidence={(src) => setSelectedEvidence(src)}
                 />
               ))}
@@ -308,6 +312,13 @@ export default function ChatPanel({ initialPrompt, sessionId }: Props) {
             >
               {isListening ? <MicOff size={20} /> : <Mic size={20} />}
             </button>
+
+            {/* Language Selector */}
+            <LanguageSelector
+              value={selectedLang}
+              onChange={(lang) => setSelectedLang(lang)}
+              className="hidden sm:inline-block"
+            />
 
             {/* Query Text Input */}
             <input

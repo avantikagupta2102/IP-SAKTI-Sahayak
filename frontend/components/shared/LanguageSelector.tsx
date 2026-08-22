@@ -5,10 +5,13 @@ export const LANGUAGES = [
   { code: "hi", name: "Hindi", label: "हिन्दी" },
   { code: "ta", name: "Tamil", label: "தமிழ்" },
   { code: "te", name: "Telugu", label: "తెలుగు" },
-  { code: "mr", name: "Marathi", label: "मराठी" },
-  { code: "bn", name: "Bengali", label: "বাংলা" },
   { code: "kn", name: "Kannada", label: "ಕನ್ನಡ" },
   { code: "ml", name: "Malayalam", label: "മലയാളം" },
+  { code: "mr", name: "Marathi", label: "मराठी" },
+  { code: "gu", name: "Gujarati", label: "ગુજરાતી" },
+  { code: "bn", name: "Bengali", label: "বাংলা" },
+  { code: "pa", name: "Punjabi", label: "ਪੰਜਾਬੀ" },
+  { code: "ur", name: "Urdu", label: "اردو" },
 ];
 
 interface Props {

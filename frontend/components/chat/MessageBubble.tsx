@@ -12,6 +12,7 @@ interface MessageProps {
   confidence?: string;
   actions?: Action[];
   timestamp: string;
+  detectedLanguage?: string;
   onSelectEvidence?: (source: SourceRef) => void;
 }
 
@@ -23,6 +24,7 @@ export default function MessageBubble({
   confidence,
   actions,
   timestamp,
+  detectedLanguage,
   onSelectEvidence,
 }: MessageProps) {
   const [rating, setRating] = useState<number | null>(null);
@@ -100,6 +102,12 @@ export default function MessageBubble({
                 {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
                 <span className="hidden sm:inline">{isSpeaking ? "Stop" : "Listen"}</span>
               </button>
+
+              {detectedLanguage && detectedLanguage !== "en" && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                  🌐 {detectedLanguage.toUpperCase()}
+                </span>
+              )}
 
               {confidence && (
                 <span

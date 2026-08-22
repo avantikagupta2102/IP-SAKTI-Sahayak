@@ -56,6 +56,7 @@ def _call_ollama(
     user_prompt: str,
     system_prompt: Optional[str] = None,
     format_json: bool = False,
+    max_tokens: int = 1024,
     temperature: float = 0.1,
 ) -> str:
     """Send a chat request to local Ollama server."""
@@ -70,8 +71,8 @@ def _call_ollama(
         "stream": False,
         "options": {
             "temperature": temperature,
-            "num_predict": 256,
-            "num_ctx": 2048,
+            "num_predict": max_tokens,
+            "num_ctx": 4096,
         },
     }
 
@@ -146,6 +147,7 @@ def complete(
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             format_json=False,
+            max_tokens=max_tokens,
             temperature=temperature,
         )
     elif provider == "anthropic":
@@ -161,6 +163,7 @@ def complete(
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             format_json=False,
+            max_tokens=max_tokens,
             temperature=temperature,
         )
 
