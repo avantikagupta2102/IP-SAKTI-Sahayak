@@ -115,8 +115,11 @@ async def health():
 
     if provider == "ollama":
         try:
+            headers = {}
+            if settings.ollama_api_key:
+                headers["Authorization"] = f"Bearer {settings.ollama_api_key}"
             with httpx.Client(timeout=1.5) as client:
-                r = client.get(f"{settings.ollama_base_url.rstrip('/')}/api/tags")
+                r = client.get(f"{settings.ollama_base_url.rstrip('/')}/api/tags", headers=headers)
                 if r.status_code == 200:
                     ollama_connected = True
         except Exception:

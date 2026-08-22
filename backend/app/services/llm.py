@@ -77,10 +77,13 @@ def _call_ollama(
         payload["format"] = "json"
 
     url = f"{settings.ollama_base_url.rstrip('/')}/api/chat"
+    headers = {}
+    if settings.ollama_api_key:
+        headers["Authorization"] = f"Bearer {settings.ollama_api_key}"
 
     try:
         with httpx.Client(timeout=settings.ollama_timeout_seconds) as client:
-            resp = client.post(url, json=payload)
+            resp = client.post(url, json=payload, headers=headers)
             resp.raise_for_status()
             data = resp.json()
             content = data.get("message", {}).get("content", "")
