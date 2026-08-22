@@ -1,318 +1,243 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import ChatInput from "@/components/ChatInput";
-import ChatMessage, { Message } from "@/components/ChatMessage";
-import UploadZone from "@/components/UploadZone";
-import {
-  analyzeDocument,
-  getSources,
-  sendChat,
-  SourceListItem,
-  UploadResponse,
-} from "@/lib/api";
+import { useState, useMemo, useCallback } from "react";
+import { RefreshCw, ScanLine, ChevronDown } from "lucide-react";
 
-// ============================================================
-// Quick-action chips
-// ============================================================
-const QUICK_ACTIONS = [
-  { label: "Patent Filing", emoji: "🔬", query: "How do I file a patent application in India? What are the steps and fees?" },
-  { label: "Trademark", emoji: "™️", query: "How do I register a trademark for my AYUSH brand in India?" },
-  { label: "Copyright", emoji: "©️", query: "How do I protect my creative work with copyright in India?" },
-  { label: "AYUSH Startup", emoji: "🌿", query: "What IP protections are available for an AYUSH startup's formulations and brand?" },
-  { label: "PCT Application", emoji: "🌍", query: "How can an Indian inventor file an international patent via PCT?" },
-  { label: "TK Protection", emoji: "📜", query: "How does India protect Traditional Knowledge from biopiracy?" },
+import AppSidebar from "@/components/dashboard/AppSidebar";
+import StatGrid from "@/components/dashboard/StatGrid";
+import RiskCard from "@/components/dashboard/RiskCard";
+import Inspector from "@/components/dashboard/Inspector";
+import ScanModal from "@/components/dashboard/ScanModal";
+
+import {
+  RISKS,
+  Risk,
+  Category,
+  Priority,
+  getStats,
+  daysUntil,
+} from "@/lib/risk-data";
+
+type NavItem = "Risk Radar" | "Document Vault" | "Compliance Analytics" | "Expert Queue";
+type CategoryFilter = "All Risks" | Category;
+
+const CATEGORIES: CategoryFilter[] = [
+  "All Risks",
+  "IP & Patents",
+  "Advertisement & Claims",
+  "Licensing & Renewals",
 ];
 
-// ============================================================
-// Skeleton loading state
-// ============================================================
-function LoadingSkeleton() {
-  return (
-    <div className="flex flex-col gap-3 animate-fade-up">
-      <div className="flex items-center gap-2 mb-1">
-        <div className="w-6 h-6 rounded-full skeleton" />
-        <div className="h-3 w-28 skeleton" />
-      </div>
-      <div className="h-3 w-full skeleton" />
-      <div className="h-3 w-5/6 skeleton" />
-      <div className="h-3 w-4/6 skeleton" />
-      <div className="h-3 w-3/6 skeleton mt-1" />
-    </div>
-  );
-}
+const PRIORITIES: ("All" | Priority)[] = ["All", "HIGH", "MEDIUM", "LOW"];
 
-// ============================================================
-// Trusted sources strip
-// ============================================================
-function SourcesStrip({ sources }: { sources: SourceListItem[] }) {
-  return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-      <span className="text-xs text-slate-500 flex-shrink-0">Trusted:</span>
-      {sources.map((src) => (
-        <a
-          key={src.id}
-          href={src.url ?? "#"}
-          target={src.url ? "_blank" : undefined}
-          rel="noopener noreferrer"
-          className="flex-shrink-0 text-xs text-slate-400 hover:text-indigo-300 border border-slate-800 hover:border-indigo-500/40 px-2.5 py-1 rounded-full transition-all duration-200"
-        >
-          {src.authority ?? src.title}
-        </a>
-      ))}
-    </div>
-  );
-}
+export default function DashboardPage() {
+  const [nav, setNav] = useState<NavItem>("Risk Radar");
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("All Risks");
+  const [priorityFilter, setPriorityFilter] = useState<"All" | Priority>("All");
+  const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
+  const [risks, setRisks] = useState<Risk[]>(RISKS);
+  const [showScan, setShowScan] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showPriorityDrop, setShowPriorityDrop] = useState(false);
 
-// ============================================================
-// Main page
-// ============================================================
-export default function HomePage() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | undefined>();
-  const [sources, setSources] = useState<SourceListItem[]>([]);
-  const [showUpload, setShowUpload] = useState(false);
-  const [pendingDoc, setPendingDoc] = useState<UploadResponse | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const uploadSectionRef = useRef<HTMLDivElement>(null);
+  const handleEscalate = useCallback((id: string) => {
+    setRisks((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, escalated: true } : r))
+    );
+    if (selectedRisk?.id === id) {
+      setSelectedRisk((prev) => prev ? { ...prev, escalated: true } : prev);
+    }
+  }, [selectedRisk]);
 
-  // Fetch trusted sources on mount
-  useEffect(() => {
-    getSources()
-      .then((r) => setSources(r.sources))
-      .catch(() => {});
-  }, []);
+  const handleScanComplete = () => {
+    setLoading(true);
+    setTimeout(() => setLoading(false), 1200);
+  };
 
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  const filtered = useMemo(() => {
+    return risks.filter((r) => {
+      const catOk = categoryFilter === "All Risks" || r.category === categoryFilter;
+      const priOk = priorityFilter === "All" || r.priority === priorityFilter;
+      return catOk && priOk;
+    });
+  }, [risks, categoryFilter, priorityFilter]);
 
-  const sendMessage = useCallback(
-    async (text: string) => {
-      const userMsg: Message = {
-        role: "user",
-        text,
-        id: `user-${Date.now()}`,
-      };
-      setMessages((prev) => [...prev, userMsg]);
-      setIsLoading(true);
-
-      try {
-        const response = await sendChat({
-          query: text,
-          conversation_id: conversationId,
-        });
-
-        if (!conversationId) setConversationId(response.conversation_id);
-
-        const assistantMsg: Message = {
-          role: "assistant",
-          id: response.message_id,
-          data: response,
-        };
-        setMessages((prev) => [...prev, assistantMsg]);
-      } catch (err) {
-        const errorMsg: Message = {
-          role: "assistant",
-          id: `err-${Date.now()}`,
-          data: {
-            message_id: `err-${Date.now()}`,
-            conversation_id: conversationId ?? "",
-            answer: `⚠️ **Error:** ${(err as Error).message ?? "Something went wrong. Please try again."}`,
-            sources: [],
-            confidence: "LOW",
-            confidence_score: 0,
-            actions: [],
-          },
-        };
-        setMessages((prev) => [...prev, errorMsg]);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [conversationId]
-  );
-
-  const handleUpload = useCallback((response: UploadResponse) => {
-    setPendingDoc(response);
-    setShowUpload(false);
-    // Auto-trigger analysis
-    const userMsg: Message = {
-      role: "user",
-      text: `📄 Uploaded: **${response.filename}** (${response.page_count} pages)\n\nPlease analyze this document and explain what I need to do.`,
-      id: `upload-${Date.now()}`,
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
-
-    analyzeDocument({
-      document_id: response.document_id,
-      question: "Analyze this document and explain what it means and what I need to do next.",
-    })
-      .then((analysis) => {
-        const assistantMsg: Message = {
-          role: "assistant",
-          id: `analyze-${Date.now()}`,
-          data: {
-            message_id: `analyze-${Date.now()}`,
-            conversation_id: conversationId ?? "",
-            answer: [
-              `**Document Type:** ${analysis.summary.doc_type.replace(/_/g, " ")}`,
-              "",
-              analysis.summary.summary,
-              analysis.answer ?? "",
-            ]
-              .filter(Boolean)
-              .join("\n\n"),
-            sources: analysis.sources,
-            confidence: analysis.confidence as "HIGH" | "MEDIUM" | "LOW",
-            confidence_score: analysis.confidence_score,
-            actions: analysis.requirements.map((req, i) => ({
-              step: i + 1,
-              description: req,
-              required_documents: [],
-            })),
-          },
-        };
-        setMessages((prev) => [...prev, assistantMsg]);
-      })
-      .catch((err) => {
-        const errorMsg: Message = {
-          role: "assistant",
-          id: `err-${Date.now()}`,
-          data: {
-            message_id: `err-${Date.now()}`,
-            conversation_id: conversationId ?? "",
-            answer: `⚠️ Could not analyze the document: ${(err as Error).message}`,
-            sources: [],
-            confidence: "LOW",
-            confidence_score: 0,
-            actions: [],
-          },
-        };
-        setMessages((prev) => [...prev, errorMsg]);
-      })
-      .finally(() => setIsLoading(false));
-  }, [conversationId]);
-
-  const isFirstMessage = messages.length === 0;
+  const stats = useMemo(() => getStats(risks), [risks]);
+  const highCount = risks.filter((r) => r.priority === "HIGH").length;
+  const mediumCount = risks.filter((r) => r.priority === "MEDIUM").length;
+  const urgentRisk = risks.find((r) => daysUntil(r.deadline) <= 45 && r.priority === "HIGH");
 
   return (
-    <div className="relative z-10 flex flex-col min-h-dvh max-h-dvh">
-      {/* ---- Header ---- */}
-      <header className="flex-shrink-0 flex items-center justify-between px-4 sm:px-8 py-4 glass border-b border-slate-800/80">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/30">
-            S
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-white leading-tight">
-              IP-SAKTI{" "}
-              <span className="gradient-text">Sahayak</span>
-            </h1>
-            <p className="text-[11px] text-slate-500 leading-tight">
-              Indian IP & AYUSH Regulatory Guidance
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="hidden sm:block text-xs text-slate-500 border border-slate-800 px-2.5 py-1 rounded-full">
-            Grounded · Cited · Confidence-scored
-          </span>
-        </div>
-      </header>
+    <div className="flex h-dvh bg-slate-50 overflow-hidden font-sans">
+      {/* ── Sidebar ─────────────────────────────── */}
+      <AppSidebar activeNav={nav} onNavChange={setNav} />
 
-      {/* ---- Chat area ---- */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 pb-32">
-        {isFirstMessage ? (
-          /* Hero / empty state */
-          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-6 animate-fade-up">
-            <div className="space-y-3 max-w-xl">
-              <p className="text-4xl sm:text-5xl font-bold text-white leading-tight">
-                Navigate Indian IP{" "}
-                <span className="gradient-text">with confidence</span>
-              </p>
-              <p className="text-slate-400 text-base">
-                Ask about patents, trademarks, copyright, AYUSH regulations. Every
-                answer is grounded in official sources with citations and next steps.
+      {/* ── Main area ───────────────────────────── */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+
+        {/* ── Topbar ────────────────────────────── */}
+        <header className="flex-shrink-0 flex items-center justify-between px-8 py-4 bg-white border-b border-slate-200 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth={2}>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="font-display text-base font-bold text-slate-900 leading-tight">
+                Risk Radar
+              </h1>
+              <p className="text-xs text-slate-400">
+                Product #AY-2026-X · last scan 22 Aug 2026
               </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="flex items-center gap-1.5 text-sm text-slate-600 font-medium border border-slate-200 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">
+              <RefreshCw size={14} />
+              Switch profile
+            </button>
+            <button
+              onClick={() => setShowScan(true)}
+              className="flex items-center gap-1.5 text-sm text-white font-semibold bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded-lg shadow-sm transition-colors"
+            >
+              <ScanLine size={14} />
+              Scan new product
+            </button>
+          </div>
+        </header>
 
-            {/* Quick-action chips */}
-            <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
-              {QUICK_ACTIONS.map((action) => (
+        {/* ── Content (scroll area) ─────────────── */}
+        <div className="flex flex-1 overflow-hidden">
+
+          {/* Left panel: stats + feed */}
+          <div className="flex-1 overflow-y-auto px-8 py-6">
+
+            {/* Stat grid */}
+            <StatGrid
+              stats={stats}
+              highCount={highCount}
+              mediumCount={mediumCount}
+              urgentLabel={urgentRisk ? `Form 25-D · ${daysUntil(urgentRisk.deadline)} days left` : undefined}
+            />
+
+            {/* Filters */}
+            <div className="flex items-center justify-between mb-4">
+              {/* Category tabs */}
+              <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategoryFilter(cat)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-150 whitespace-nowrap ${
+                      categoryFilter === cat
+                        ? "bg-emerald-700 text-white shadow-sm"
+                        : "text-slate-500 hover:text-slate-700 hover:bg-white"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Priority dropdown */}
+              <div className="relative">
                 <button
-                  key={action.label}
-                  className="chip"
-                  onClick={() => sendMessage(action.query)}
-                  id={`chip-${action.label.toLowerCase().replace(/\s+/g, "-")}`}
+                  onClick={() => setShowPriorityDrop((v) => !v)}
+                  className="flex items-center gap-2 text-sm text-slate-600 font-medium border border-slate-200 bg-white px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors"
                 >
-                  <span aria-hidden="true">{action.emoji}</span>
-                  {action.label}
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <line x1="21" y1="10" x2="7" y2="10" />
+                    <line x1="21" y1="6" x2="3" y2="6" />
+                    <line x1="21" y1="14" x2="3" y2="14" />
+                    <line x1="21" y1="18" x2="7" y2="18" />
+                  </svg>
+                  {priorityFilter === "All" ? "All priorities" : priorityFilter}
+                  <ChevronDown size={13} />
                 </button>
-              ))}
+                {showPriorityDrop && (
+                  <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px]">
+                    {PRIORITIES.map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => { setPriorityFilter(p); setShowPriorityDrop(false); }}
+                        className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                          priorityFilter === p
+                            ? "text-emerald-700 font-semibold bg-emerald-50"
+                            : "text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {p === "All" ? "All priorities" : p}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Trusted sources */}
-            {sources.length > 0 && (
-              <div className="w-full max-w-lg">
-                <SourcesStrip sources={sources} />
-              </div>
-            )}
+            {/* Risk feed */}
+            <div className="flex flex-col gap-3">
+              {loading ? (
+                // Skeleton cards
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm animate-pulse">
+                    <div className="flex justify-between mb-3">
+                      <div className="flex gap-2">
+                        <div className="h-5 w-16 bg-slate-100 rounded-full" />
+                        <div className="h-5 w-24 bg-slate-100 rounded-full" />
+                      </div>
+                      <div className="h-7 w-8 bg-slate-100 rounded" />
+                    </div>
+                    <div className="h-4 w-3/4 bg-slate-100 rounded mb-2" />
+                    <div className="h-3 w-full bg-slate-100 rounded mb-4" />
+                    <div className="h-1.5 w-full bg-slate-100 rounded" />
+                  </div>
+                ))
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-slate-200">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
+                    <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={1.5}>
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-500">No risks match your filters</p>
+                  <p className="text-xs text-slate-400 mt-1">Try changing the category or priority filter.</p>
+                  <button
+                    onClick={() => { setCategoryFilter("All Risks"); setPriorityFilter("All"); }}
+                    className="mt-4 text-xs text-emerald-700 font-semibold hover:underline"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                filtered.map((risk) => (
+                  <RiskCard
+                    key={risk.id}
+                    risk={risk}
+                    isSelected={selectedRisk?.id === risk.id}
+                    onClick={() =>
+                      setSelectedRisk((prev) => prev?.id === risk.id ? null : risk)
+                    }
+                  />
+                ))
+              )}
+            </div>
           </div>
-        ) : (
-          /* Message list */
-          <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((msg) => (
-              <div key={msg.id} className="animate-fade-up">
-                <ChatMessage message={msg} />
-              </div>
-            ))}
-            {isLoading && (
-              <div className="animate-fade-up">
-                <LoadingSkeleton />
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
 
-      {/* ---- Upload panel ---- */}
-      {showUpload && (
-        <div
-          ref={uploadSectionRef}
-          className="flex-shrink-0 px-4 sm:px-8 pb-3 max-w-3xl mx-auto w-full animate-fade-up"
-        >
-          <UploadZone onUploaded={handleUpload} />
+          {/* ── Inspector panel ───────────────────── */}
+          <aside className="w-[380px] flex-shrink-0 bg-white border-l border-slate-200 overflow-y-auto">
+            <Inspector risk={selectedRisk} onEscalate={handleEscalate} />
+          </aside>
         </div>
-      )}
-
-      {/* ---- Input bar ---- */}
-      <div className="flex-shrink-0 px-4 sm:px-8 pb-16 pt-2 max-w-3xl mx-auto w-full">
-        {/* Quick chips when conversation is ongoing */}
-        {!isFirstMessage && !isLoading && (
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
-            {QUICK_ACTIONS.slice(0, 3).map((action) => (
-              <button
-                key={action.label}
-                className="chip text-[12px] py-1 px-3 flex-shrink-0"
-                onClick={() => sendMessage(action.query)}
-              >
-                {action.emoji} {action.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <ChatInput
-          onSend={sendMessage}
-          onUploadClick={() => setShowUpload((v) => !v)}
-          disabled={isLoading}
-        />
       </div>
+
+      {/* ── Scan modal ─────────────────────────── */}
+      {showScan && (
+        <ScanModal
+          onClose={() => setShowScan(false)}
+          onComplete={handleScanComplete}
+        />
+      )}
     </div>
   );
 }
