@@ -358,6 +358,59 @@ class ExpertBriefResponse(BaseModel):
     next_milestones: List[str] = Field(default_factory=list)
 
 
+# ============================================================
+# Investor & Incubator Matchmaker Schemas (POST /api/investor-match/*)
+# ============================================================
 
 
+class InvestorProfileItem(BaseModel):
+    id: str
+    name: str
+    type: str  # VC | Angel | TTO | Scheme
+    entity_name: str
+    preferred_sectors: List[str]
+    ticket_size_min_lakhs: float
+    ticket_size_max_lakhs: float
+    match_score: float = Field(..., description="Cosine similarity score (0 - 100)")
+    thesis_summary: str
+    verified_status: bool = True
+    active_dealroom_id: Optional[str] = None
 
+
+class GovtSchemeMatchItem(BaseModel):
+    id: str
+    scheme_name: str
+    ministry: str
+    max_funding_lakhs: float
+    funding_type: str  # Grant | Equity-free Seed | Subsidy | Loan Guarantee
+    eligibility_match: bool
+    matching_criteria: List[str]
+
+
+class InvestorMatchRequest(BaseModel):
+    profile_id: Optional[str] = None
+    ip_abstract: Optional[str] = None
+    sector: str = "AYUSH"
+    stage: str = "Seed"  # Idea | Provisional | TRL-4 | Granted
+    funding_required_lakhs: float = 25.0
+
+
+class InvestorMatchResponse(BaseModel):
+    ip_verification_status: str  # VERIFIED | PENDING | PROVISIONAL
+    trust_score: float  # 0 - 100
+    matched_investors: List[InvestorProfileItem]
+    matched_schemes: List[GovtSchemeMatchItem]
+
+
+class NDARequest(BaseModel):
+    investor_id: str
+    profile_id: str
+    ip_title: str
+
+
+class NDAResponse(BaseModel):
+    nda_id: str
+    status: str  # EXECUTED | PENDING_SIGNATURE
+    signed_at: str
+    nda_document_text: str
+    dealroom_access_token: str

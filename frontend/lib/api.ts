@@ -478,3 +478,76 @@ export async function generateExpertBrief(data: ExpertBriefRequest): Promise<Exp
     body: JSON.stringify(data),
   });
 }
+
+// ============================================================
+// Investor & Incubator Matchmaker Types & API Callers
+// ============================================================
+
+export interface InvestorProfileItem {
+  id: string;
+  name: string;
+  type: string;
+  entity_name: string;
+  preferred_sectors: string[];
+  ticket_size_min_lakhs: number;
+  ticket_size_max_lakhs: number;
+  match_score: number;
+  thesis_summary: string;
+  verified_status: boolean;
+  active_dealroom_id?: string;
+}
+
+export interface GovtSchemeMatchItem {
+  id: string;
+  scheme_name: string;
+  ministry: string;
+  max_funding_lakhs: number;
+  funding_type: string;
+  eligibility_match: boolean;
+  matching_criteria: string[];
+}
+
+export interface InvestorMatchRequest {
+  profile_id?: string;
+  ip_abstract?: string;
+  sector?: string;
+  stage?: string;
+  funding_required_lakhs?: number;
+}
+
+export interface InvestorMatchResponse {
+  ip_verification_status: string;
+  trust_score: number;
+  matched_investors: InvestorProfileItem[];
+  matched_schemes: GovtSchemeMatchItem[];
+}
+
+export interface NDARequest {
+  investor_id: string;
+  profile_id: string;
+  ip_title: string;
+}
+
+export interface NDAResponse {
+  nda_id: string;
+  status: string;
+  signed_at: string;
+  nda_document_text: string;
+  dealroom_access_token: string;
+}
+
+/** Search algorithmic matches for VCs, Angels, and Govt Schemes */
+export async function searchInvestorMatches(data: InvestorMatchRequest): Promise<InvestorMatchResponse> {
+  return apiFetch<InvestorMatchResponse>("/investor-match/search", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/** Generate and execute digital NDA for deal room vault access */
+export async function generateDigitalNDA(data: NDARequest): Promise<NDAResponse> {
+  return apiFetch<NDAResponse>("/investor-match/nda/generate", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
