@@ -329,3 +329,47 @@ export async function assessTKRisk(request: TKRiskRequest): Promise<TKRiskRespon
 export async function getReferenceHerbs(): Promise<string[]> {
   return apiFetch<string[]>("/tk-risk/reference-herbs", { method: "GET" });
 }
+
+// ============================================================
+// IP Regulations & Impact Ranking Types & API Callers
+// ============================================================
+
+export interface RegulationItem {
+  id: string;
+  title: string;
+  authority: string;
+  sectors: string[];
+  asset_types: string[];
+  summary: string;
+  impact_level: "CRITICAL" | "HIGH" | "MODERATE" | string;
+  key_provisions: string[];
+  official_reference: string;
+  relevance_score?: number;
+  relevance_reason?: string;
+}
+
+export interface RegulationsResponse {
+  total: number;
+  regulations: RegulationItem[];
+}
+
+export interface RegulationImpactResponse {
+  profile_id: string;
+  company_name: string;
+  sector: string;
+  company_type: string;
+  total_matched: number;
+  regulations: RegulationItem[];
+}
+
+/** Get complete curated list of core Indian IP & AYUSH regulations */
+export async function getRegulations(): Promise<RegulationsResponse> {
+  return apiFetch<RegulationsResponse>("/regulations", { method: "GET" });
+}
+
+/** Get regulations filtered and ranked by relevance to a given business profile */
+export async function getRegulationsImpact(profileId: string): Promise<RegulationImpactResponse> {
+  return apiFetch<RegulationImpactResponse>(`/regulations/impact?profile_id=${encodeURIComponent(profileId)}`, {
+    method: "GET",
+  });
+}

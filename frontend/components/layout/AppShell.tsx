@@ -11,6 +11,7 @@ import {
   UserCheck,
   Sparkles,
   Shield,
+  BookOpen,
   Clock
 } from "lucide-react";
 import { getUser, clearUser, UserProfile } from "@/lib/auth";
@@ -106,6 +107,17 @@ export default function AppShell({ children }: Props) {
             >
               <Leaf size={18} className={pathname === "/tk-risk" ? "text-emerald-400" : ""} />
               <span>TKDL Risk Assessor</span>
+            </button>
+            <button
+              onClick={() => router.push("/regulations")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                pathname === "/regulations"
+                  ? "bg-emerald-700/40 text-emerald-300 border border-emerald-600/50 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+              }`}
+            >
+              <BookOpen size={18} className={pathname === "/regulations" ? "text-emerald-400" : ""} />
+              <span>IP Regulations</span>
             </button>
             <button
               onClick={() => router.push("/chat")}

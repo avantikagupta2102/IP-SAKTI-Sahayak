@@ -257,3 +257,37 @@ class TKRiskResponse(BaseModel):
     section_3p_compliance_status: str
 
 
+# ============================================================
+# IP Regulations & Impact Ranking Schemas (GET /api/regulations)
+# ============================================================
+
+
+class RegulationItem(BaseModel):
+    id: str
+    title: str
+    authority: str
+    sectors: List[str] = Field(default_factory=list)
+    asset_types: List[str] = Field(default_factory=list)
+    summary: str
+    impact_level: str = Field(description="CRITICAL | HIGH | MODERATE")
+    key_provisions: List[str] = Field(default_factory=list)
+    official_reference: str
+    relevance_score: Optional[int] = Field(None, description="Computed relevance score 0-100 for a given profile")
+    relevance_reason: Optional[str] = Field(None, description="Reason why this regulation is relevant to the profile")
+
+
+class RegulationsResponse(BaseModel):
+    total: int
+    regulations: List[RegulationItem]
+
+
+class RegulationImpactResponse(BaseModel):
+    profile_id: str
+    company_name: str
+    sector: str
+    company_type: str
+    total_matched: int
+    regulations: List[RegulationItem]
+
+
+
