@@ -17,12 +17,21 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ---- LLM --------------------------------------------------------
+    # ---- LLM Configuration -----------------------------------------
+    # Provider: "ollama" (local, default) or "anthropic" (cloud API)
+    llm_provider: str = "ollama"
+
+    # Ollama settings
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.2"  # or llama3, mistral, qwen2.5, phi3, etc.
+    ollama_timeout_seconds: float = 120.0
+
+    # Anthropic settings (optional fallback)
     anthropic_api_key: str = ""
     claude_model: str = "claude-3-5-sonnet-20241022"
 
-    # ---- Embeddings -------------------------------------------------
-    embed_model: str = "paraphrase-multilingual-mpnet-base-v2"
+    # ---- Embeddings (Local FastEmbed / ONNX) ------------------------
+    embed_model: str = "BAAI/bge-small-en-v1.5"
 
     # ---- Vector store -----------------------------------------------
     chroma_persist_dir: str = "./data/chroma_db"

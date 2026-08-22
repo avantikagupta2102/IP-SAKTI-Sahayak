@@ -105,20 +105,44 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 @app.get("/health", tags=["system"], summary="Health check")
 async def health():
     """Returns API status and basic diagnostics."""
+    import httpx
     from app.services.vector_store import collection_count
 
-    has_api_key = bool(settings.anthropic_api_key)
     chunk_count = collection_count()
+    provider = settings.llm_provider.lower().strip()
+    ollama_connected = False
+    active_model = settings.ollama_model
+
+    if provider == "ollama":
+        try:
+            with httpx.Client(timeout=1.5) as client:
+                r = client.get(f"{settings.ollama_base_url.rstrip('/')}/api/tags")
+                if r.status_code == 200:
+                    ollama_connected = True
+        except Exception:
+            ollama_connected = False
+
+    llm_configured = (provider == "ollama" and ollama_connected) or (
+        provider == "anthropic" and bool(settings.anthropic_api_key)
+    )
+
+    if provider == "ollama":
+        msg = (
+            f"Ollama connected ({active_model})."
+            if ollama_connected
+            else f"Ollama not detected on {settings.ollama_base_url}. Start Ollama with 'ollama run {active_model}'."
+        )
+    else:
+        msg = "Anthropic API ready." if bool(settings.anthropic_api_key) else "Anthropic API key not configured."
 
     return {
         "status": "ok",
         "version": "0.1.0",
-        "llm_configured": has_api_key,
+        "llm_provider": provider,
+        "llm_model": active_model if provider == "ollama" else settings.claude_model,
+        "llm_configured": llm_configured,
         "kb_chunk_count": chunk_count,
-        "message": (
-            "Ready." if has_api_key
-            else "Running in stub mode — set ANTHROPIC_API_KEY in .env to enable live responses."
-        ),
+        "message": msg,
     }
 
 
