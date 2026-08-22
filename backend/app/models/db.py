@@ -86,3 +86,21 @@ class UploadedDocument(Base):
     # JSON blob: {doc_type, summary, deadline_date, key_requirements}
     summary_json: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class BusinessProfile(Base):
+    """Business Profile storing company metadata and IP asset portfolio."""
+
+    __tablename__ = "business_profiles"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    company_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    sector: Mapped[str] = mapped_column(String(128), default="AYUSH")  # AYUSH, Pharma, Biotech, Software, MSME, etc.
+    company_type: Mapped[str] = mapped_column(String(128), default="Startup")  # Startup, MSME, Enterprise, Researcher
+    registration_number: Mapped[str] = mapped_column(String(128), nullable=True)  # UDYAM, CIN, License No
+    state: Mapped[str] = mapped_column(String(128), nullable=True)
+    # JSON blob: list of IPAsset [{asset_type, title, status, registration_no}]
+    ip_assets_json: Mapped[str] = mapped_column(Text, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+

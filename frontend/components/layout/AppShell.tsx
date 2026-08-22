@@ -86,6 +86,17 @@ export default function AppShell({ children }: Props) {
               <span>Dashboard</span>
             </button>
             <button
+              onClick={() => router.push("/passport")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                pathname === "/passport"
+                  ? "bg-emerald-700/40 text-emerald-300 border border-emerald-600/50 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+              }`}
+            >
+              <Shield size={18} className={pathname === "/passport" ? "text-emerald-400" : ""} />
+              <span>Compliance Passport</span>
+            </button>
+            <button
               onClick={() => router.push("/chat")}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 pathname === "/chat"

@@ -146,3 +146,73 @@ class ErrorResponse(BaseModel):
     detail: str
     code: Optional[str] = None
     extra: Optional[Any] = None
+
+
+# ============================================================
+# Business Profile & Compliance Passport Schemas
+# ============================================================
+
+
+class IPAssetSchema(BaseModel):
+    asset_type: str = Field(description="Patent | Trademark | GI | Copyright")
+    title: str = Field(..., min_length=1)
+    status: str = Field(default="Granted", description="Granted | Pending | Draft | Expired")
+    registration_no: Optional[str] = None
+
+
+class BusinessProfileCreate(BaseModel):
+    company_name: str = Field(..., min_length=1, max_length=256)
+    sector: str = Field(default="AYUSH", description="AYUSH | Pharma | Biotech | Software | MSME | Other")
+    company_type: str = Field(default="Startup", description="Startup | MSME | Enterprise | Researcher")
+    registration_number: Optional[str] = None
+    state: Optional[str] = None
+    ip_assets: List[IPAssetSchema] = Field(default_factory=list)
+
+
+class BusinessProfileUpdate(BaseModel):
+    company_name: Optional[str] = None
+    sector: Optional[str] = None
+    company_type: Optional[str] = None
+    registration_number: Optional[str] = None
+    state: Optional[str] = None
+    ip_assets: Optional[List[IPAssetSchema]] = None
+
+
+class BusinessProfileResponse(BaseModel):
+    id: str
+    company_name: str
+    sector: str
+    company_type: str
+    registration_number: Optional[str] = None
+    state: Optional[str] = None
+    ip_assets: List[IPAssetSchema] = Field(default_factory=list)
+    created_at: str
+    updated_at: str
+
+
+class ChecklistItem(BaseModel):
+    item: str
+    status: str = Field(description="PASSED | WARNING | CRITICAL")
+    guidance: str
+
+
+class AssetBreakdown(BaseModel):
+    patents_count: int = 0
+    trademarks_count: int = 0
+    copyrights_count: int = 0
+    gis_count: int = 0
+    total_assets: int = 0
+
+
+class CompliancePassportResponse(BaseModel):
+    profile_id: str
+    company_name: str
+    sector: str
+    company_type: str
+    overall_score: int = Field(description="Compliance Score between 0 and 100")
+    status_level: str = Field(description="EXCELLENT | GOOD | NEEDS_ATTENTION | HIGH_RISK")
+    asset_breakdown: AssetBreakdown
+    compliance_checklist: List[ChecklistItem] = Field(default_factory=list)
+    recommended_actions: List[str] = Field(default_factory=list)
+    next_filing_deadline: Optional[str] = None
+

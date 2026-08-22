@@ -106,6 +106,62 @@ export interface HealthResponse {
 }
 
 // ============================================================
+// Business Profile & Compliance Passport Types
+// ============================================================
+
+export interface IPAsset {
+  asset_type: "Patent" | "Trademark" | "GI" | "Copyright" | string;
+  title: string;
+  status: "Granted" | "Pending" | "Draft" | "Expired" | string;
+  registration_no?: string;
+}
+
+export interface BusinessProfile {
+  id?: string;
+  company_name: string;
+  sector: string;
+  company_type: string;
+  registration_number?: string;
+  state?: string;
+  ip_assets: IPAsset[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ChecklistItem {
+  item: string;
+  status: "PASSED" | "WARNING" | "CRITICAL";
+  guidance: string;
+}
+
+export interface AssetBreakdown {
+  patents_count: number;
+  trademarks_count: number;
+  copyrights_count: number;
+  gis_count: number;
+  total_assets: number;
+}
+
+export interface CompliancePassport {
+  profile_id: string;
+  company_name: string;
+  sector: string;
+  company_type: string;
+  overall_score: number;
+  status_level: "EXCELLENT" | "GOOD" | "NEEDS_ATTENTION" | "HIGH_RISK";
+  asset_breakdown: {
+    patents_count: number;
+    trademarks_count: number;
+    copyrights_count: number;
+    gis_count: number;
+    total_assets: number;
+  };
+  compliance_checklist: ChecklistItem[];
+  recommended_actions: string[];
+  next_filing_deadline?: string;
+}
+
+// ============================================================
 // Core fetch helper
 // ============================================================
 
@@ -189,4 +245,35 @@ export async function getHealth(): Promise<HealthResponse> {
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api").replace(/\/api\/?$/, "");
   const res = await fetch(`${baseUrl}/health`);
   return res.json();
+}
+
+/** Create a new Business Profile */
+export async function createProfile(data: BusinessProfile): Promise<BusinessProfile> {
+  return apiFetch<BusinessProfile>("/profile", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/** List all Business Profiles */
+export async function getProfiles(): Promise<BusinessProfile[]> {
+  return apiFetch<BusinessProfile[]>("/profile", { method: "GET" });
+}
+
+/** Get a Business Profile by ID */
+export async function getProfile(id: string): Promise<BusinessProfile> {
+  return apiFetch<BusinessProfile>(`/profile/${id}`, { method: "GET" });
+}
+
+/** Update an existing Business Profile */
+export async function updateProfile(id: string, data: Partial<BusinessProfile>): Promise<BusinessProfile> {
+  return apiFetch<BusinessProfile>(`/profile/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/** Derive computed Compliance Passport for a profile */
+export async function getCompliancePassport(id: string): Promise<CompliancePassport> {
+  return apiFetch<CompliancePassport>(`/profile/${id}/passport`, { method: "GET" });
 }
