@@ -76,5 +76,6 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)) -> Chat
         confidence_score=response.confidence_score,
     )
     db.add(assistant_msg)
+    await db.commit()
 
     return response

@@ -185,7 +185,7 @@ async def ingest(
     """Run the full ingestion pipeline."""
     await init_db()
 
-    pdf_files = sorted(pdf_dir.glob("*.pdf"))
+    pdf_files = sorted(pdf_dir.rglob("*.pdf"))
     if not pdf_files:
         logger.warning(f"No PDFs found in {pdf_dir}. Add PDFs and re-run.")
         return
@@ -279,8 +279,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pdf-dir",
         type=Path,
-        default=Path("data/samples"),
-        help="Directory containing PDFs to ingest (default: data/samples)",
+        default=Path("data"),
+        help="Directory containing PDFs to ingest (default: data)",
     )
     parser.add_argument(
         "--chunk-size",

@@ -49,7 +49,7 @@ class Settings(BaseSettings):
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
     # ---- Retrieval --------------------------------------------------
-    retrieval_top_k: int = 6
+    retrieval_top_k: int = 3
     similarity_threshold_high: float = 0.75
 
     # ---- Upload -----------------------------------------------------

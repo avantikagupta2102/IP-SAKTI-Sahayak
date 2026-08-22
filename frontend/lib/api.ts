@@ -2,6 +2,8 @@
  * lib/api.ts — Typed fetch wrappers for all IP-SAKTI Sahayak backend endpoints.
  */
 
+// Direct URL to backend. CORS is configured on the backend to allow localhost:3000.
+// We do NOT use Next.js rewrites because long Ollama calls (30s+) cause ECONNRESET.
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 // ============================================================
@@ -184,7 +186,7 @@ export async function submitFeedback(
 }
 
 export async function getHealth(): Promise<HealthResponse> {
-  const baseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/api\/?$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api").replace(/\/api\/?$/, "");
   const res = await fetch(`${baseUrl}/health`);
   return res.json();
 }
