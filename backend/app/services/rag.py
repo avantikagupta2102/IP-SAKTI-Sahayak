@@ -52,8 +52,9 @@ def _build_grounded_prompt(query_en: str, chunks: List[RetrievedChunk]) -> str:
                 meta_line += f" | Authority: {authority}"
             if url:
                 meta_line += f" | URL: {url}"
+            snippet = chunk.text[:600] if len(chunk.text) > 600 else chunk.text
             evidence_parts.append(
-                f"[Evidence {i}]\n{meta_line}\n\n{chunk.text}"
+                f"[Evidence {i}]\n{meta_line}\n\n{snippet}"
             )
         evidence_block = "\n\n---\n\n".join(evidence_parts)
 

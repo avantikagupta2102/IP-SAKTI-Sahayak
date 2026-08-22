@@ -70,6 +70,8 @@ def _call_ollama(
         "stream": False,
         "options": {
             "temperature": temperature,
+            "num_predict": 256,
+            "num_ctx": 2048,
         },
     }
 
