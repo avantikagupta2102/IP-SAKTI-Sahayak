@@ -11,6 +11,7 @@ import {
   UserCheck,
   Sparkles,
   Shield,
+  Cpu,
   BookOpen,
   Calendar as CalendarIcon,
   FileText,
@@ -98,6 +99,17 @@ export default function AppShell({ children }: Props) {
             >
               <Shield size={18} className={pathname === "/passport" ? "text-emerald-400" : ""} />
               <span>{t("compliance_passport", "Compliance Passport")}</span>
+            </button>
+            <button
+              onClick={() => router.push("/iot-compliance")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                pathname === "/iot-compliance"
+                  ? "bg-emerald-700/40 text-emerald-300 border border-emerald-600/50 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+              }`}
+            >
+              <Cpu size={18} className={pathname === "/iot-compliance" ? "text-emerald-400" : ""} />
+              <span>{t("smart_iot_compliance", "Smart IoT Compliance")}</span>
             </button>
             <button
               onClick={() => router.push("/tk-risk")}
@@ -203,7 +215,13 @@ export default function AppShell({ children }: Props) {
         <header className="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-6 flex-shrink-0">
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-bold text-slate-900">
-              {pathname === "/dashboard" ? t("dashboard", "Compliance & IP Dashboard") : t("ask_ai_advisor", "AI Legal & AYUSH Consultation")}
+              {pathname === "/dashboard"
+                ? t("dashboard", "Compliance & IP Dashboard")
+                : pathname === "/iot-compliance"
+                ? t("smart_iot_compliance", "Smart IoT Compliance & Evidence Monitoring")
+                : pathname === "/passport"
+                ? t("compliance_passport", "Compliance Passport & Audit Trail")
+                : t("ask_ai_advisor", "AI Legal & AYUSH Consultation")}
             </h2>
           </div>
 

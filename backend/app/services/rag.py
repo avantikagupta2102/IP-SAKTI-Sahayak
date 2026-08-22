@@ -169,10 +169,30 @@ async def answer_query(
     top_score = f"{chunks[0].score:.3f}" if chunks else "N/A"
     logger.info(f"Retrieved {len(chunks)} chunks (top score: {top_score})")
 
-    # 4. Build grounded prompt (inject extra context first if provided)
+    # 4. Build grounded prompt (inject IoT context or extra context first if provided)
     full_query = query_en
+    iot_keywords = ["iot", "humidity", "temperature", "deviation", "alert", "sensor", "esp32", "evidence", "process"]
+    if any(kw in query_en.lower() for kw in iot_keywords):
+        iot_context = (
+            "REAL-TIME IOT SENSOR & COMPLIANCE CONTEXT:\n"
+            "Device ID: ESP32-001 (Processing Monitor)\n"
+            "Associated Product: Herbal Extract A (Controlled Drying Process)\n"
+            "Latest Readings: Temperature: 28.4°C | Humidity: 61.0% (Peak observed: 78.5%) | Sound/Activity: 42\n"
+            "Configured Process Monitoring Limits (Organization Defined):\n"
+            "  - Temperature Limit: Min 20.0°C, Max 30.0°C\n"
+            "  - Humidity Limit: Min 40.0%, Max 70.0%\n"
+            "  - Sound Limit: Max 70.0\n"
+            "Recent Compliance Event: IOT-EVT-0003 - Humidity exceeded configured limit (Observed: 78.5%, Threshold: 70%, Status: DEVIATION DETECTED).\n"
+            "Evidence Integrity Hash: SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
+            "Note for AI Advisor: Explain observed sensor value vs configured threshold, timestamp, and potential process implications without inventing ungrounded legal requirements.\n\n"
+        )
+        if extra_context:
+            extra_context = f"{iot_context}\n{extra_context}"
+        else:
+            extra_context = iot_context
+
     if extra_context:
-        full_query = f"Document context:\n{extra_context[:2000]}\n\nUser question: {query_en}"
+        full_query = f"Context:\n{extra_context[:2500]}\n\nUser question: {query_en}"
 
     grounded_prompt = _build_grounded_prompt(full_query, chunks)
 

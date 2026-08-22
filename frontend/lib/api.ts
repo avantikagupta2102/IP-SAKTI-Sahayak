@@ -591,3 +591,146 @@ export async function convertVoiceToAbstract(data: VoiceToAbstractRequest): Prom
     body: JSON.stringify(data),
   });
 }
+
+// ============================================================
+// Smart IoT Compliance Types & API Callers
+// ============================================================
+
+export interface IOTDevice {
+  id?: string;
+  device_id: string;
+  name: string;
+  device_type: string;
+  status: "ONLINE" | "OFFLINE" | string;
+  wifi_status: string;
+  sampling_interval_sec: number;
+  last_seen: string;
+  temperature: number;
+  humidity: number;
+  sound: number;
+  compliance_status: "NORMAL" | "ATTENTION" | "DEVIATION" | string;
+}
+
+export interface IOTRule {
+  id?: string;
+  device_id: string;
+  temp_min: number;
+  temp_max: number;
+  humidity_min: number;
+  humidity_max: number;
+  sound_max: number;
+}
+
+export interface IOTEvent {
+  id?: string;
+  event_id: string;
+  device_id: string;
+  timestamp: string;
+  event_type: "START" | "LOG" | "DEVIATION" | "RECOVERY" | string;
+  parameter?: string;
+  observed_value?: string;
+  configured_range?: string;
+  status: "NORMAL" | "ATTENTION" | "DEVIATION" | string;
+  acknowledged: boolean;
+}
+
+export interface IOTEvidence {
+  id?: string;
+  evidence_id: string;
+  event_id: string;
+  device_id: string;
+  timestamp: string;
+  temperature: number;
+  humidity: number;
+  sound: number;
+  status: string;
+  rule_id: string;
+  integrity_hash: string;
+}
+
+export interface IOTDeviceProductLink {
+  id?: string;
+  device_id: string;
+  product_name: string;
+  process_name: string;
+  monitoring_purpose: string;
+  passport_id?: string;
+}
+
+export interface IOTSummary {
+  device: IOTDevice;
+  current_rule: IOTRule;
+  link: IOTDeviceProductLink;
+  compliance_status: "NORMAL" | "ATTENTION" | "DEVIATION" | string;
+  latest_event?: IOTEvent;
+  unacknowledged_alerts_count: number;
+  demo_mode: boolean;
+}
+
+export interface IOTTelemetryPoint {
+  id: string;
+  device_id: string;
+  timestamp: string;
+  temperature: number;
+  humidity: number;
+  sound: number;
+}
+
+/** Get IoT summary including device status, live metrics, active rules, and alert count */
+export async function getIOTSummary(deviceId: string = "ESP32-001"): Promise<IOTSummary> {
+  return apiFetch<IOTSummary>(`/iot/summary?device_id=${encodeURIComponent(deviceId)}`, { method: "GET" });
+}
+
+/** List connected IoT devices */
+export async function getIOTDevices(): Promise<IOTDevice[]> {
+  return apiFetch<IOTDevice[]>("/iot/devices", { method: "GET" });
+}
+
+/** Fetch historical sensor telemetry data points for live line charts */
+export async function getIOTTelemetryHistory(deviceId: string = "ESP32-001", limit: number = 30): Promise<IOTTelemetryPoint[]> {
+  return apiFetch<IOTTelemetryPoint[]>(`/iot/telemetry?device_id=${encodeURIComponent(deviceId)}&limit=${limit}`, {
+    method: "GET",
+  });
+}
+
+/** Fetch chronological timeline of IoT events and compliance alerts */
+export async function getIOTEvents(deviceId: string = "ESP32-001", limit: number = 20): Promise<IOTEvent[]> {
+  return apiFetch<IOTEvent[]>(`/iot/events?device_id=${encodeURIComponent(deviceId)}&limit=${limit}`, { method: "GET" });
+}
+
+/** Acknowledge an in-app compliance alert */
+export async function acknowledgeIOTAlert(eventId: string): Promise<{ status: string }> {
+  return apiFetch<{ status: string }>(`/iot/alerts/${encodeURIComponent(eventId)}/acknowledge`, { method: "POST" });
+}
+
+/** Get organization-defined process limits */
+export async function getIOTRules(deviceId: string = "ESP32-001"): Promise<IOTRule> {
+  return apiFetch<IOTRule>(`/iot/rules?device_id=${encodeURIComponent(deviceId)}`, { method: "GET" });
+}
+
+/** Update process monitoring limits */
+export async function updateIOTRules(ruleData: IOTRule): Promise<IOTRule> {
+  return apiFetch<IOTRule>("/iot/rules", {
+    method: "POST",
+    body: JSON.stringify(ruleData),
+  });
+}
+
+/** Retrieve verifiable audit evidence record with SHA-256 integrity hash */
+export async function getIOTEvidence(eventId: string): Promise<IOTEvidence> {
+  return apiFetch<IOTEvidence>(`/iot/evidence/${encodeURIComponent(eventId)}`, { method: "GET" });
+}
+
+/** Update product/process linkage for device */
+export async function saveIOTDeviceLink(linkData: IOTDeviceProductLink): Promise<IOTDeviceProductLink> {
+  return apiFetch<IOTDeviceProductLink>("/iot/device-link", {
+    method: "POST",
+    body: JSON.stringify(linkData),
+  });
+}
+
+/** Trigger simulation tick for hackathon demo mode */
+export async function triggerIOTDemoTick(forceDeviation: boolean = false): Promise<any> {
+  return apiFetch<any>(`/iot/demo-tick?force_deviation=${forceDeviation}`, { method: "POST" });
+}
+

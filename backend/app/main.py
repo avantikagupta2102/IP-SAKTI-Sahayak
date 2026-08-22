@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.core.database import init_db
-from app.routers import calendar, chat, document, expert_brief, feedback, investor_match, multilingual, profile, regulations, sources, tk_risk, upload
+from app.routers import calendar, chat, document, expert_brief, feedback, investor_match, iot, multilingual, profile, regulations, sources, tk_risk, upload
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -150,7 +150,6 @@ async def health():
     }
 
 
-
 # ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
@@ -166,3 +165,4 @@ app.include_router(calendar.router, prefix="/api", tags=["calendar"])
 app.include_router(expert_brief.router, prefix="/api", tags=["expert-brief"])
 app.include_router(investor_match.router, prefix="/api", tags=["investor-match"])
 app.include_router(multilingual.router, prefix="/api", tags=["multilingual"])
+app.include_router(iot.router, prefix="/api/iot", tags=["iot"])

@@ -20,6 +20,8 @@ import {
   Scale,
   Calendar,
   Layers,
+  Cpu,
+  Activity,
 } from "lucide-react";
 import {
   BusinessProfile,
@@ -29,6 +31,10 @@ import {
   getProfiles,
   updateProfile,
   getCompliancePassport,
+  getIOTEvents,
+  getIOTEvidence,
+  IOTEvent,
+  IOTEvidence,
 } from "@/lib/api";
 
 const SECTORS = ["AYUSH", "Pharma & Healthcare", "Biotech", "Software & DeepTech", "Manufacturing / MSME", "Agriculture"];
@@ -63,13 +69,19 @@ export default function PassportPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [passport, setPassport] = useState<CompliancePassport | null>(null);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
+  const [iotEvents, setIotEvents] = useState<IOTEvent[]>([]);
+  const [selectedEvidence, setSelectedEvidence] = useState<IOTEvidence | null>(null);
 
   // Load existing profile or fetch latest
   useEffect(() => {
     async function loadData() {
       setIsLoading(true);
       try {
-        const profiles = await getProfiles();
+        const [profiles, evts] = await Promise.all([
+          getProfiles(),
+          getIOTEvents("ESP32-001", 10).catch(() => []),
+        ]);
+        setIotEvents(evts);
         if (profiles.length > 0) {
           const active = profiles[0];
           setProfileId(active.id || null);
@@ -521,6 +533,58 @@ export default function PassportPage() {
                       </div>
                     </div>
 
+                    {/* Live IoT Audit Trail */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                          <Cpu size={14} className="text-emerald-700" />
+                          Live IoT Audit Trail
+                        </h4>
+                        <button
+                          onClick={() => router.push("/iot-compliance")}
+                          className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                        >
+                          View IoT Dashboard →
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 text-xs">
+                        {iotEvents.length === 0 ? (
+                          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
+                            No hardware telemetry logs recorded yet.
+                          </div>
+                        ) : (
+                          iotEvents.slice(0, 3).map((evt) => (
+                            <div key={evt.id || evt.event_id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono text-[10px] font-bold text-slate-600">{evt.event_id} • ESP32-001</span>
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${evt.status === "DEVIATION" ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"}`}>
+                                  {evt.status}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-bold text-slate-900">{evt.parameter || "Environmental Stream"}: {evt.observed_value}</span>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const ev = await getIOTEvidence(evt.event_id);
+                                      setSelectedEvidence(ev);
+                                    } catch (e) {
+                                      alert("Could not load evidence");
+                                    }
+                                  }}
+                                  className="text-[10px] font-bold text-emerald-700 hover:underline"
+                                >
+                                  View Evidence
+                                </button>
+                              </div>
+                              <p className="text-[10px] text-slate-400 font-mono">{evt.timestamp}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
                     {/* Actionable Recommended Next Steps */}
                     <div>
                       <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">Recommended Action Plan</h4>
@@ -561,6 +625,80 @@ export default function PassportPage() {
           </div>
         </div>
       </div>
+
+      {/* Evidence Record Modal */}
+      {selectedEvidence && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-up">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-lg w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Tamper-Evident Audit Record
+                </span>
+                <h3 className="font-black text-base text-slate-900 mt-1">{selectedEvidence.evidence_id}</h3>
+              </div>
+              <button onClick={() => setSelectedEvidence(null)} className="text-slate-400 hover:text-slate-600 font-bold">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-200 font-medium">
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Device ID</span>
+                  <span className="font-bold font-mono text-slate-900">{selectedEvidence.device_id}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Timestamp</span>
+                  <span className="font-bold text-slate-900">{selectedEvidence.timestamp}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Compliance Status</span>
+                  <span className="font-bold text-emerald-700">{selectedEvidence.status}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Rule ID</span>
+                  <span className="font-bold font-mono text-slate-900">{selectedEvidence.rule_id}</span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                <span className="font-bold text-slate-800">Telemetry Snapshot:</span>
+                <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                  <div className="p-2 bg-white rounded-lg border border-slate-200 font-bold">
+                    <p className="text-slate-500 text-[10px]">Temp</p>
+                    <p className="text-xs text-slate-900">{selectedEvidence.temperature}°C</p>
+                  </div>
+                  <div className="p-2 bg-white rounded-lg border border-slate-200 font-bold">
+                    <p className="text-slate-500 text-[10px]">Humidity</p>
+                    <p className="text-xs text-slate-900">{selectedEvidence.humidity}%</p>
+                  </div>
+                  <div className="p-2 bg-white rounded-lg border border-slate-200 font-bold">
+                    <p className="text-slate-500 text-[10px]">Sound</p>
+                    <p className="text-xs text-slate-900">{selectedEvidence.sound}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Integrity Verification Hash (SHA-256):</label>
+                <div className="p-2.5 bg-slate-950 text-emerald-400 font-mono text-[11px] rounded-xl break-all border border-slate-800">
+                  {selectedEvidence.integrity_hash}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end">
+              <button
+                onClick={() => setSelectedEvidence(null)}
+                className="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl"
+              >
+                Close Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

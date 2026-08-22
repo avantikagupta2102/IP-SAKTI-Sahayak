@@ -12,7 +12,8 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  HelpCircle
+  HelpCircle,
+  Cpu,
 } from "lucide-react";
 
 import AppShell from "@/components/layout/AppShell";
@@ -20,6 +21,7 @@ import WizardModal from "@/components/dashboard/WizardModal";
 import { getUser, greeting, UserProfile } from "@/lib/auth";
 import { getAllSessions, HistorySession } from "@/lib/history";
 import { useLanguage } from "@/context/LanguageContext";
+import { getIOTSummary, IOTSummary } from "@/lib/api";
 
 const IP_TYPES = [
   {
@@ -57,6 +59,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showWizard, setShowWizard] = useState(false);
   const [history, setHistory] = useState<HistorySession[]>([]);
+  const [iotSummary, setIotSummary] = useState<IOTSummary | null>(null);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -66,6 +69,9 @@ export default function DashboardPage() {
     } else {
       setUser(u);
       setHistory(getAllSessions());
+      getIOTSummary("ESP32-001")
+        .then((res) => setIotSummary(res))
+        .catch(() => null);
     }
   }, [router]);
 
@@ -206,6 +212,39 @@ export default function DashboardPage() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* ── 3.5. Smart Compliance Monitor Compact Card ── */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-2xs hover:border-emerald-500 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0">
+              <Cpu size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  ● ESP32-001 Online
+                </span>
+                <span className="text-xs text-slate-400 font-medium">Last updated {iotSummary?.device.last_seen || "Just now"}</span>
+              </div>
+              <h3 className="font-bold text-base text-slate-900">Smart Compliance Monitor</h3>
+              <div className="flex items-center gap-4 mt-2 text-xs font-semibold text-slate-700">
+                <span>Temperature: <strong className="text-slate-900">{iotSummary?.device.temperature ?? 28.4}°C</strong></span>
+                <span>Humidity: <strong className="text-slate-900">{iotSummary?.device.humidity ?? 61}%</strong></span>
+                <span>Sound: <strong className="text-slate-900">{iotSummary?.device.sound ?? 42}</strong></span>
+                <span>Compliance: <strong className={iotSummary?.compliance_status === "DEVIATION" ? "text-rose-600" : "text-emerald-700"}>{iotSummary?.compliance_status || "NORMAL"}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push("/iot-compliance")}
+            className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-colors self-start md:self-auto flex-shrink-0"
+          >
+            <span>Open IoT Monitor</span>
+            <ArrowRight size={14} />
+          </button>
         </div>
 
         {/* ── 4. Recent Chat Sessions ── */}

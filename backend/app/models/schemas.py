@@ -414,3 +414,88 @@ class NDAResponse(BaseModel):
     signed_at: str
     nda_document_text: str
     dealroom_access_token: str
+
+
+# ============================================================
+# Smart IoT Compliance Schemas (/api/iot/*)
+# ============================================================
+
+
+class TelemetryIngestRequest(BaseModel):
+    device_id: str = Field(..., example="ESP32-001")
+    timestamp: Optional[str] = Field(None, example="2026-08-23T10:30:00Z")
+    temperature: float = Field(..., example=28.4)
+    humidity: float = Field(..., example=61.0)
+    sound: float = Field(..., example=42.0)
+
+
+class IOTDeviceSchema(BaseModel):
+    id: Optional[str] = None
+    device_id: str
+    name: str = "ESP32-001 Processing Monitor"
+    device_type: str = "Processing Monitor"
+    status: str = "ONLINE"  # ONLINE | OFFLINE
+    wifi_status: str = "Connected"
+    sampling_interval_sec: int = 5
+    last_seen: str
+    temperature: float = 28.4
+    humidity: float = 61.0
+    sound: float = 42.0
+    compliance_status: str = "NORMAL"  # NORMAL | ATTENTION | DEVIATION
+
+
+class IOTRuleSchema(BaseModel):
+    id: Optional[str] = None
+    device_id: str = "ESP32-001"
+    temp_min: float = 20.0
+    temp_max: float = 30.0
+    humidity_min: float = 40.0
+    humidity_max: float = 70.0
+    sound_max: float = 70.0
+
+
+class IOTEventSchema(BaseModel):
+    id: Optional[str] = None
+    event_id: str
+    device_id: str
+    timestamp: str
+    event_type: str = "MONITORING_LOG"  # START | LOG | DEVIATION | RECOVERY
+    parameter: Optional[str] = None
+    observed_value: Optional[str] = None
+    configured_range: Optional[str] = None
+    status: str = "NORMAL"  # NORMAL | ATTENTION | DEVIATION
+    acknowledged: bool = False
+
+
+class IOTEvidenceSchema(BaseModel):
+    id: Optional[str] = None
+    evidence_id: str
+    event_id: str
+    device_id: str
+    timestamp: str
+    temperature: float
+    humidity: float
+    sound: float
+    status: str
+    rule_id: str = "ENV-HUM-001"
+    integrity_hash: str
+
+
+class IOTDeviceProductLinkSchema(BaseModel):
+    id: Optional[str] = None
+    device_id: str = "ESP32-001"
+    product_name: str = "Herbal Extract A"
+    process_name: str = "Controlled Drying"
+    monitoring_purpose: str = "Environmental process monitoring for quality evidence"
+    passport_id: Optional[str] = None
+
+
+class IOTSummaryResponse(BaseModel):
+    device: IOTDeviceSchema
+    current_rule: IOTRuleSchema
+    link: IOTDeviceProductLinkSchema
+    compliance_status: str  # NORMAL | ATTENTION | DEVIATION
+    latest_event: Optional[IOTEventSchema] = None
+    unacknowledged_alerts_count: int = 0
+    demo_mode: bool = True
+

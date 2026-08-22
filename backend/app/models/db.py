@@ -124,3 +124,104 @@ class ComplianceEvent(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class IOTDevice(Base):
+    """ESP32 or sensor monitoring hardware device."""
+
+    __tablename__ = "iot_devices"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    device_id: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(256), default="ESP32-001 Processing Monitor")
+    device_type: Mapped[str] = mapped_column(String(128), default="Processing Monitor")
+    status: Mapped[str] = mapped_column(String(32), default="ONLINE")  # ONLINE, OFFLINE
+    wifi_status: Mapped[str] = mapped_column(String(32), default="Connected")
+    sampling_interval_sec: Mapped[int] = mapped_column(Integer, default=5)
+    last_seen: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class IOTTelemetry(Base):
+    """Real-time sensor telemetry record received from ESP32."""
+
+    __tablename__ = "iot_telemetry"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    device_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    timestamp: Mapped[str] = mapped_column(String(64), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    temperature: Mapped[float] = mapped_column(Float, nullable=False)
+    humidity: Mapped[float] = mapped_column(Float, nullable=False)
+    sound: Mapped[float] = mapped_column(Float, nullable=False)
+    is_valid: Mapped[bool] = mapped_column(Integer, default=1)  # 1=True, 0=False
+
+
+class IOTRule(Base):
+    """Organization-defined monitoring process limits."""
+
+    __tablename__ = "iot_rules"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    device_id: Mapped[str] = mapped_column(String(128), default="ESP32-001", index=True)
+    temp_min: Mapped[float] = mapped_column(Float, default=20.0)
+    temp_max: Mapped[float] = mapped_column(Float, default=30.0)
+    humidity_min: Mapped[float] = mapped_column(Float, default=40.0)
+    humidity_max: Mapped[float] = mapped_column(Float, default=70.0)
+    sound_max: Mapped[float] = mapped_column(Float, default=70.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class IOTEvent(Base):
+    """Compliance monitoring event or alert generated from telemetry rule evaluation."""
+
+    __tablename__ = "iot_events"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    device_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    timestamp: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(64), default="MONITORING_LOG")  # START, LOG, DEVIATION, RECOVERY
+    parameter: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)  # Temperature, Humidity, Sound
+    observed_value: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    configured_range: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="NORMAL")  # NORMAL, ATTENTION, DEVIATION
+    acknowledged: Mapped[bool] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class IOTEvidence(Base):
+    """Tamper-evident audit record generated for significant compliance events."""
+
+    __tablename__ = "iot_evidence"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    evidence_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    device_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    timestamp: Mapped[str] = mapped_column(String(64), nullable=False)
+    temperature: Mapped[float] = mapped_column(Float, nullable=False)
+    humidity: Mapped[float] = mapped_column(Float, nullable=False)
+    sound: Mapped[float] = mapped_column(Float, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="NORMAL")
+    rule_id: Mapped[str] = mapped_column(String(128), default="ENV-HUM-001")
+    integrity_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class IOTDeviceProductLink(Base):
+    """Association between an IoT device and a specific product, process, or passport."""
+
+    __tablename__ = "iot_device_product_links"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    device_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    product_name: Mapped[str] = mapped_column(String(256), default="Herbal Extract A")
+    process_name: Mapped[str] = mapped_column(String(256), default="Controlled Drying")
+    monitoring_purpose: Mapped[str] = mapped_column(String(512), default="Environmental process monitoring for quality evidence")
+    passport_id: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+

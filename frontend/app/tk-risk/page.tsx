@@ -18,6 +18,7 @@ import {
   RefreshCw,
   FlaskConical,
   Scale,
+  Cpu,
 } from "lucide-react";
 import {
   IngredientInput,
@@ -293,6 +294,22 @@ export default function TKRiskPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Process Evidence for IP Review Optional Card */}
+                  <div className="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                        <Cpu size={15} className="text-emerald-700" />
+                        Use Process Evidence for IP Review
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                        Smart IoT Linked
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-emerald-800 leading-relaxed">
+                      Attach real-time ESP32-001 environmental process monitoring evidence (temperature: 28.4°C, humidity: 61%, controlled extraction parameters) as technical supporting context for IP prior-art review.
+                    </p>
                   </div>
 
                   {/* Submit Assessment Button */}
