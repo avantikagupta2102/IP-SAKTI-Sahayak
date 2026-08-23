@@ -2,7 +2,7 @@
 services/llm.py — Local LLM provider using Ollama (with Anthropic / stub fallback).
 
 Supports:
-  - Local Ollama API (http://localhost:11434/api/chat)
+    - Local Ollama API (http://127.0.0.1:11434/api/generate)
   - Native JSON mode ("format": "json")
   - Anthropic Claude API as optional secondary provider
   - Fallback stub responses if Ollama is not yet launched
@@ -60,14 +60,11 @@ def _call_ollama(
     temperature: float = 0.1,
 ) -> str:
     """Send a chat request to local Ollama server."""
-    messages = [
-        {"role": "system", "content": system_prompt or GROUNDING_SYSTEM_PROMPT},
-        {"role": "user", "content": user_prompt},
-    ]
+    prompt = f"{system_prompt or GROUNDING_SYSTEM_PROMPT}\n\nUSER REQUEST:\n{user_prompt}"
 
     payload = {
         "model": settings.ollama_model,
-        "messages": messages,
+        "prompt": prompt,
         "stream": False,
         "options": {
             "temperature": temperature,
@@ -80,17 +77,19 @@ def _call_ollama(
     if format_json:
         payload["format"] = "json"
 
-    url = f"{settings.ollama_base_url.rstrip('/')}/api/chat"
+    url = f"{settings.ollama_base_url.rstrip('/')}/api/generate"
     headers = {}
     if settings.ollama_api_key:
         headers["Authorization"] = f"Bearer {settings.ollama_api_key}"
 
     try:
-        with httpx.Client(timeout=180.0) as client:
+        with httpx.Client(timeout=settings.ollama_timeout_seconds, trust_env=False) as client:
             resp = client.post(url, json=payload, headers=headers)
             resp.raise_for_status()
             data = resp.json()
-            content = data.get("message", {}).get("content", "")
+            content = data.get("response", "")
+            if not content:
+                logger.error("Ollama returned no response content: %s", data)
             return _clean_json_output(content) if format_json else content
     except httpx.ConnectError:
         logger.warning(
@@ -188,6 +187,7 @@ def complete_json(
             user_prompt=user_prompt,
             system_prompt=json_system,
             format_json=True,
+            max_tokens=max_tokens,
             temperature=0.0,
         )
         return _clean_json_output(res)

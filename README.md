@@ -1,3 +1,38 @@
+# AI Filing Assistant Workflow
+
+The application includes a local-first IP preparation workflow at
+`/filing-assistant`. A user description is converted into a structured invention
+profile, refined with adaptive questions, turned into an AI-generated preliminary
+draft, searched against the indexed local FAISS corpus, and scored for IP
+readiness.
+
+## Workflow API
+
+- `POST /api/filing/start` extracts a profile from an initial description.
+- `POST /api/filing/message` adds clarification to a filing session.
+- `POST /api/filing/{session_id}/generate-draft` creates a preliminary draft.
+- `POST /api/prior-art/search` searches the current local indexed corpus.
+- `POST /api/readiness/score` calculates the deterministic 0-100 readiness score.
+
+The readiness score is weighted across invention clarity (15%), technical detail
+(20%), novelty articulation (15%), problem/solution clarity (15%), differentiation
+(15%), documentation completeness (10%), and draft completeness (10%). It measures
+preparation completeness, not patentability.
+
+The prior-art endpoint reports only documents present in the local vector index.
+Use the existing ingestion script to populate that corpus; an empty corpus is a
+valid result and is shown as such in the UI. Document metadata is preserved rather
+than fabricated.
+
+Generated drafts and claim concepts are labelled: **AI-generated preliminary draft
+— requires review by a qualified IP professional.** Similarity and readiness
+outputs are AI-assisted preliminary assessments, not legal advice, a novelty
+opinion, or a determination of patentability or infringement.
+
+The workflow uses the existing Ollama and FastEmbed/FAISS integrations. Configure
+`OLLAMA_BASE_URL` and `OLLAMA_MODEL` in `backend/.env` (the default provider is
+local Ollama). If Ollama is unavailable, the profile retains the user's text and
+the UI asks them to retry or continue manually.
 # IP-SAKTI Sahayak
 
 **Grounded decision-support for Indian IP and AYUSH regulatory guidance.**
