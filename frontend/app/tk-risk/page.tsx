@@ -61,8 +61,11 @@ const SAMPLE_FORMULATIONS = [
   },
 ];
 
+import { useLanguage } from "@/context/LanguageContext";
+
 export default function TKRiskPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   // Formulation Input State
   const [formulationName, setFormulationName] = useState(SAMPLE_FORMULATIONS[0].name);
@@ -319,7 +322,7 @@ export default function TKRiskPage() {
                     className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-600 disabled:bg-slate-300 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all mt-4"
                   >
                     {isAssessing ? <RefreshCw size={18} className="animate-spin" /> : <Search size={18} />}
-                    <span>{isAssessing ? "Cross-referencing TKDL Records..." : "Assess TKDL & Section 3(p) Patent Risk"}</span>
+                    <span>{isAssessing ? "Cross-referencing TKDL Records..." : t("assess_tkdl_risk", "Assess TKDL & Section 3(p) Patent Risk")}</span>
                   </button>
                 </div>
               </div>

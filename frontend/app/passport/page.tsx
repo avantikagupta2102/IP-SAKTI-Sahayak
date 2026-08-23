@@ -36,14 +36,16 @@ import {
   IOTEvent,
   IOTEvidence,
 } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 const SECTORS = ["AYUSH", "Pharma & Healthcare", "Biotech", "Software & DeepTech", "Manufacturing / MSME", "Agriculture"];
 const COMPANY_TYPES = ["Startup", "MSME", "Enterprise", "Researcher / Academic"];
 const ASSET_TYPES = ["Patent", "Trademark", "GI", "Copyright"];
 const STATUSES = ["Granted", "Pending", "Draft", "Expired"];
 
-export default function PassportPage() {
+export default function CompliancePassportPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   // Profile Form State
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -191,7 +193,7 @@ export default function PassportPage() {
                 <span className="text-xs text-slate-400">|</span>
                 <span className="text-xs font-semibold text-slate-500">Live Statutory Audit</span>
               </div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Business Profile &amp; IP Passport</h1>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">{t("compliance_passport", "Business Profile & IP Passport")}</h1>
               <p className="text-xs text-slate-500 mt-1 max-w-2xl">
                 Manage your enterprise details and IP portfolio on the left. The dynamic Compliance Passport on the right automatically computes your legal health score and audit readiness.
               </p>

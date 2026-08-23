@@ -40,9 +40,11 @@ import {
   triggerIOTDemoTick,
 } from "@/lib/api";
 import { getUser } from "@/lib/auth";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function IOTCompliancePage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   // Primary Data State
   const [summary, setSummary] = useState<IOTSummary | null>(null);
@@ -204,7 +206,7 @@ export default function IOTCompliancePage() {
     <AppShell>
       <div className="h-full overflow-y-auto bg-slate-50 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          
+
           {/* ── 1. Page Header & Top Device Status Bar ── */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
@@ -217,18 +219,18 @@ export default function IOTCompliancePage() {
                 <span className="text-xs font-bold text-slate-700 font-mono">ESP32-001</span>
                 <span className="text-xs text-slate-300">•</span>
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
-                  {isOnline ? "Online" : "Device Offline"}
+                  <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                  {isOnline ? t("device_online", "Device Online") : t("device_offline", "Device Offline")}
                 </span>
                 <span className="text-xs text-slate-400 font-medium ml-1">
-                  Wi-Fi: <strong className="text-slate-700">{isOnline ? "Connected" : "Disconnected"}</strong>
+                  Wi-Fi: <strong className="text-slate-700">{isOnline ? t("connected", "Connected") : t("disconnected", "Disconnected")}</strong>
                 </span>
                 <span className="text-xs text-slate-400 font-medium">
-                  Last synchronized: <strong className="text-slate-700">{lastSyncTime}</strong>
+                  {t("last_synchronized", "Last synchronized")}: <strong className="text-slate-700">{lastSyncTime}</strong>
                 </span>
               </div>
 
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Smart IoT Compliance</h1>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">{t("smart_iot_compliance", "Smart IoT Compliance")}</h1>
               <p className="text-xs text-slate-500 mt-1 max-w-2xl">
                 Real-time environmental monitoring and compliance evidence for AYUSH processes. Connected with your Compliance Passport.
               </p>
@@ -243,7 +245,7 @@ export default function IOTCompliancePage() {
                 title="Pulse live telemetry"
               >
                 <Zap size={14} className={isSimulating ? "animate-spin text-emerald-600" : "text-emerald-600"} />
-                <span>Demo Sensor Pulse</span>
+                <span>{t("demo_sensor_mode", "Demo Sensor Pulse")}</span>
               </button>
 
               <button
@@ -261,18 +263,18 @@ export default function IOTCompliancePage() {
                 className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-xs transition-colors"
               >
                 <FileCheck size={15} />
-                <span>Generate Evidence Report</span>
+                <span>{t("generate_evidence_report", "Generate Evidence Report")}</span>
               </button>
             </div>
           </div>
 
           {/* ── 2. Live Metric Cards Grid (Temperature, Humidity, Sound, Device Status) ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
+
             {/* TEMPERATURE CARD */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:border-emerald-300 transition-all space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Temperature</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("temperature", "Temperature")}</span>
                 <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
                   <Thermometer size={18} />
                 </div>
@@ -285,7 +287,7 @@ export default function IOTCompliancePage() {
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
                   <span className="text-slate-400">Limit: {summary?.current_rule.temp_min}–{summary?.current_rule.temp_max}°C</span>
                   <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    Normal
+                    {t("normal_status", "Normal")}
                   </span>
                 </div>
               </div>
@@ -294,7 +296,7 @@ export default function IOTCompliancePage() {
             {/* HUMIDITY CARD */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:border-emerald-300 transition-all space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Humidity</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("humidity", "Humidity")}</span>
                 <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
                   <Droplets size={18} />
                 </div>
@@ -309,13 +311,12 @@ export default function IOTCompliancePage() {
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
                   <span className="text-slate-400">Limit: {summary?.current_rule.humidity_min}–{summary?.current_rule.humidity_max}%</span>
                   <span
-                    className={`font-bold px-2 py-0.5 rounded border ${
-                      (dev?.humidity ?? 61) > (summary?.current_rule.humidity_max ?? 70)
-                        ? "text-rose-700 bg-rose-50 border-rose-200"
-                        : "text-emerald-700 bg-emerald-50 border-emerald-200"
-                    }`}
+                    className={`font-bold px-2 py-0.5 rounded border ${(dev?.humidity ?? 61) > (summary?.current_rule.humidity_max ?? 70)
+                      ? "text-rose-700 bg-rose-50 border-rose-200"
+                      : "text-emerald-700 bg-emerald-50 border-emerald-200"
+                      }`}
                   >
-                    {(dev?.humidity ?? 61) > (summary?.current_rule.humidity_max ?? 70) ? "Deviation" : "Normal"}
+                    {(dev?.humidity ?? 61) > (summary?.current_rule.humidity_max ?? 70) ? t("deviation_detected", "Deviation") : t("normal_status", "Normal")}
                   </span>
                 </div>
               </div>
@@ -324,7 +325,7 @@ export default function IOTCompliancePage() {
             {/* SOUND / ACTIVITY CARD */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:border-emerald-300 transition-all space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sound / Activity</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("sound_activity", "Sound / Activity")}</span>
                 <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
                   <Volume2 size={18} />
                 </div>
@@ -337,7 +338,7 @@ export default function IOTCompliancePage() {
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
                   <span className="text-slate-400">Max Configured: {summary?.current_rule.sound_max}</span>
                   <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    Normal
+                    {t("normal_status", "Normal")}
                   </span>
                 </div>
               </div>
@@ -346,7 +347,7 @@ export default function IOTCompliancePage() {
             {/* DEVICE STATUS CARD */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs hover:border-emerald-300 transition-all space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Device Status</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t("device_status", "Device Status")}</span>
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                   <Cpu size={18} />
                 </div>
@@ -356,7 +357,7 @@ export default function IOTCompliancePage() {
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
                   <span className="text-slate-400">{dev?.device_type ?? "Processing Monitor"}</span>
                   <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    {isOnline ? "Online" : "Offline"}
+                    {isOnline ? t("connected", "Online") : t("disconnected", "Offline")}
                   </span>
                 </div>
               </div>
@@ -366,24 +367,22 @@ export default function IOTCompliancePage() {
 
           {/* ── 3. Real-Time Compliance Status Banner Card ── */}
           <div
-            className={`p-6 rounded-2xl border transition-all ${
-              complianceStatus === "DEVIATION"
-                ? "bg-rose-50/90 border-rose-300 text-rose-900 shadow-sm"
-                : complianceStatus === "ATTENTION"
+            className={`p-6 rounded-2xl border transition-all ${complianceStatus === "DEVIATION"
+              ? "bg-rose-50/90 border-rose-300 text-rose-900 shadow-sm"
+              : complianceStatus === "ATTENTION"
                 ? "bg-amber-50/90 border-amber-300 text-amber-900 shadow-sm"
                 : "bg-emerald-50/90 border-emerald-300 text-emerald-950 shadow-sm"
-            }`}
+              }`}
           >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-start gap-4">
                 <div
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 text-white font-black text-xl ${
-                    complianceStatus === "DEVIATION"
-                      ? "bg-rose-600 shadow-md shadow-rose-900/20"
-                      : complianceStatus === "ATTENTION"
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 text-white font-black text-xl ${complianceStatus === "DEVIATION"
+                    ? "bg-rose-600 shadow-md shadow-rose-900/20"
+                    : complianceStatus === "ATTENTION"
                       ? "bg-amber-600 shadow-md shadow-amber-900/20"
                       : "bg-emerald-600 shadow-md shadow-emerald-900/20"
-                  }`}
+                    }`}
                 >
                   {complianceStatus === "DEVIATION" ? (
                     <AlertOctagon size={26} />
@@ -408,8 +407,8 @@ export default function IOTCompliancePage() {
                     {complianceStatus === "DEVIATION"
                       ? "Environmental Parameter Exceeded Configured Limit"
                       : complianceStatus === "ATTENTION"
-                      ? "Parameter Approaching Monitoring Threshold"
-                      : "All Monitored Parameters Within Configured Limits"}
+                        ? "Parameter Approaching Monitoring Threshold"
+                        : "All Monitored Parameters Within Configured Limits"}
                   </h3>
 
                   <p className="text-xs opacity-90 mt-0.5 leading-relaxed max-w-3xl">
@@ -428,7 +427,7 @@ export default function IOTCompliancePage() {
                   <Sliders size={14} className="text-slate-600" />
                   <span>Configure Limits</span>
                 </button>
-                
+
                 <button
                   onClick={() => setShowLinkModal(true)}
                   className="px-4 py-2.5 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition-colors flex items-center gap-1.5 shadow-2xs"
@@ -471,7 +470,7 @@ export default function IOTCompliancePage() {
 
           {/* ── 4. Main Section Grid: Live Sensor Monitoring Chart (8 Cols) & IoT Audit Trail (4 Cols) ── */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
+
             {/* ── LEFT PANEL: Live Sensor Line Chart (8 Cols) ── */}
             <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -495,7 +494,7 @@ export default function IOTCompliancePage() {
               {/* Responsive SVG Line Chart Visualization */}
               <div className="relative h-64 bg-slate-950 rounded-xl p-4 overflow-hidden border border-slate-800">
                 <div className="absolute inset-0 bg-radial from-emerald-950/30 to-transparent pointer-events-none" />
-                
+
                 {/* SVG Telemetry Stream */}
                 <svg className="w-full h-full overflow-visible" viewBox="0 0 500 200" preserveAspectRatio="none">
                   {/* Grid Lines */}
@@ -607,11 +606,10 @@ export default function IOTCompliancePage() {
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-mono text-[10px] font-bold text-slate-500">{evt.event_id}</span>
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            evt.status === "DEVIATION"
-                              ? "bg-rose-100 text-rose-800 border border-rose-300"
-                              : "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                          }`}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${evt.status === "DEVIATION"
+                            ? "bg-rose-100 text-rose-800 border border-rose-300"
+                            : "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                            }`}
                         >
                           {evt.status}
                         </span>
