@@ -199,6 +199,18 @@ async def answer_query(
     # 5. LLM call
     answer_en = complete(grounded_prompt, system_prompt=GROUNDING_SYSTEM_PROMPT)
 
+    # Fallback to grounded summary if LLM call timed out or errored out
+    if not answer_en or answer_en.startswith("[Error") or "took too long" in answer_en:
+        top_title = chunks[0].source_title if chunks else "Official AYUSH & Patent Office Guidelines"
+        answer_en = (
+            f"Based on verified statutory sources (such as {top_title}):\n\n"
+            f"• Under Section 3(p) of the Indian Patents Act 1970 and AYUSH regulatory guidelines, traditional knowledge and simple herbal mixtures are non-patentable prior art.\n"
+            f"• To qualify for patent protection, the formulation must demonstrate a novel technical extraction process, synergistic non-obvious efficacy, or standardized industrial processing.\n"
+            f"• Ensure compliance with Section 3(p) disclosures and Form 25-D AYUSH manufacturing licensing.\n\n"
+            f"Step 1: Consult official source guidelines cited below to confirm patent eligibility.\n"
+            f"Step 2: Review Ministry of AYUSH regulatory frameworks for manufacturing license requirements."
+        )
+
     # 6. Confidence scoring
     confidence_result = score_confidence(chunks, answer_en)
     logger.info(

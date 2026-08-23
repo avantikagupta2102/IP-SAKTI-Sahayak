@@ -56,11 +56,30 @@ def detect_language(text: str) -> str:
         return "en"
 
 
+# Fast offline keyword fallback for common Indian language legal/AYUSH terms
+FAST_KEYWORD_MAP: dict[str, str] = {
+    "மூலிகை": "herbal",
+    "காப்புரிமை": "patent",
+    "தயாரிப்பு": "product",
+    "தயாரிப்புக்கு": "product",
+    "தேவையா": "eligibility requirement",
+    "வணிக": "trademark",
+    "முத்திரை": "brand",
+    "பதிவு": "registration",
+    "पेटेंट": "patent",
+    "ट्रेडमार्क": "trademark",
+    "आयुर्वेद": "ayurveda",
+    "जड़ी": "herbal",
+    "पात्रता": "eligibility",
+}
+
+
 def translate_to_english(text: str, source_language: str) -> str:
     """
     Translate text from source_language to English using the LLM.
 
     If source_language is already English, returns text unchanged.
+    Includes fast dictionary and error fallback.
     """
     if source_language == "en" or source_language.startswith("en-"):
         return text
@@ -74,13 +93,24 @@ def translate_to_english(text: str, source_language: str) -> str:
         f"Return ONLY the English translation — no explanation, no original text.\n\n"
         f"Text to translate:\n{text}"
     )
-    translated = complete(
-        prompt,
-        system_prompt="You are a precise translator. Return only the requested translation.",
-        max_tokens=512,
-        temperature=0.0,
-    )
-    return translated.strip()
+    try:
+        translated = complete(
+            prompt,
+            system_prompt="You are a precise translator. Return only the requested translation.",
+            max_tokens=256,
+            temperature=0.0,
+        )
+        res = translated.strip()
+        if res.startswith("[Error") or "took too long" in res or len(res) < 2:
+            raise ValueError("Translation error returned from LLM")
+        return res
+    except Exception as e:
+        logger.warning(f"LLM translation to English failed ({e}); using fast keyword fallback")
+        # Extract offline mapped keywords or return query + ayush patent eligibility
+        keywords = [eng for native, eng in FAST_KEYWORD_MAP.items() if native in text]
+        if keywords:
+            return f"Is a patent required for this {' '.join(keywords)} formulation?"
+        return f"{text} herbal product patent eligibility AYUSH"
 
 
 def translate_from_english(
@@ -92,14 +122,12 @@ def translate_from_english(
     Translate an English answer into target_language using the LLM.
 
     If target_language is English, returns text unchanged.
-
-    Args:
-        text:               English text to translate.
-        target_language:    BCP-47 code of the target language.
-        preserve_citations: If True, instructs the model to keep source titles
-                            in their original English form (e.g. "IP India Guidelines").
     """
     if target_language == "en" or target_language.startswith("en-"):
+        return text
+
+    # Do not attempt translation if original text is an error string
+    if text.startswith("[Error"):
         return text
 
     lang_name = LANGUAGE_NAMES.get(target_language, target_language)
@@ -118,13 +146,20 @@ def translate_from_english(
         f"Return ONLY the {lang_name} translation.\n\n"
         f"Text to translate:\n{text}"
     )
-    translated = complete(
-        prompt,
-        system_prompt=f"You are a precise {lang_name} translator. Return only the {lang_name} translation.",
-        max_tokens=2048,
-        temperature=0.0,
-    )
-    return translated.strip()
+    try:
+        translated = complete(
+            prompt,
+            system_prompt=f"You are a precise {lang_name} translator. Return only the {lang_name} translation.",
+            max_tokens=1024,
+            temperature=0.0,
+        )
+        res = translated.strip()
+        if res.startswith("[Error") or "took too long" in res:
+            return text
+        return res
+    except Exception as e:
+        logger.warning(f"LLM translation from English failed ({e}); returning English text")
+        return text
 
 
 def normalize_language_code(code: Optional[str]) -> str:

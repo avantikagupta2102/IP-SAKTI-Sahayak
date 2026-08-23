@@ -71,8 +71,9 @@ def _call_ollama(
         "stream": False,
         "options": {
             "temperature": temperature,
-            "num_predict": max_tokens,
-            "num_ctx": 4096,
+            "num_predict": min(max_tokens, 1024),
+            "num_ctx": 2048,
+            "num_thread": 8,
         },
     }
 
@@ -85,7 +86,7 @@ def _call_ollama(
         headers["Authorization"] = f"Bearer {settings.ollama_api_key}"
 
     try:
-        with httpx.Client(timeout=settings.ollama_timeout_seconds) as client:
+        with httpx.Client(timeout=180.0) as client:
             resp = client.post(url, json=payload, headers=headers)
             resp.raise_for_status()
             data = resp.json()
