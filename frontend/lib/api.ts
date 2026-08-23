@@ -103,6 +103,15 @@ export interface HealthResponse {
   llm_configured: boolean;
   kb_chunk_count: number;
   message: string;
+  ai_status?: "ready" | "model_missing" | "unavailable";
+}
+
+export interface AIHealthResponse {
+  status: "ready" | "model_missing" | "unavailable";
+  provider: string;
+  model: string;
+  base_url: string;
+  message: string;
 }
 
 // ============================================================
@@ -245,6 +254,10 @@ export async function getHealth(): Promise<HealthResponse> {
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api").replace(/\/api\/?$/, "");
   const res = await fetch(`${baseUrl}/health`);
   return res.json();
+}
+
+export async function getAIHealth(): Promise<AIHealthResponse> {
+  return apiFetch<AIHealthResponse>("/ai/health", { method: "GET" });
 }
 
 /** Create a new Business Profile */
@@ -477,6 +490,97 @@ export async function generateExpertBrief(data: ExpertBriefRequest): Promise<Exp
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+// ============================================================
+// AI Filing Assistant, Prior Art & IP Readiness
+// ============================================================
+
+export interface InventionProfile {
+  title: string;
+  technical_field: string;
+  problem_statement: string;
+  existing_approach: string;
+  proposed_solution: string;
+  novel_features: string[];
+  components: string[];
+  working_principle: string;
+  process_steps: string[];
+  advantages: string[];
+  applications: string[];
+  differentiators: string[];
+}
+
+export interface FilingSessionResponse {
+  session_id: string;
+  profile: InventionProfile;
+  question?: string;
+  missing_fields: string[];
+  progress: number;
+  ai_available: boolean;
+}
+
+export interface FilingDraftResponse {
+  session_id: string;
+  profile: InventionProfile;
+  title: string;
+  abstract: string;
+  technical_field: string;
+  background: string;
+  summary: string;
+  detailed_description: string;
+  key_features: string[];
+  advantages: string[];
+  claim_concepts: string[];
+  disclaimer: string;
+}
+
+export interface PriorArtResult {
+  title: string;
+  source: string;
+  document_id: string;
+  similarity_score: number;
+  matching_concepts: string[];
+  overlapping_features: string[];
+  distinguishing_features: string[];
+  explanation: string;
+  corpus_label: string;
+}
+
+export interface PriorArtSearchResponse {
+  query_representation: string;
+  corpus_count: number;
+  results: PriorArtResult[];
+  disclaimer: string;
+}
+
+export interface ReadinessResponse {
+  score: number;
+  dimensions: { name: string; score: number; rationale: string }[];
+  strengths: string[];
+  missing_information: string[];
+  recommended_next_steps: string[];
+  disclaimer: string;
+}
+
+export async function startFiling(description: string): Promise<FilingSessionResponse> {
+  return apiFetch<FilingSessionResponse>("/filing/start", { method: "POST", body: JSON.stringify({ description }) });
+}
+
+export async function sendFilingMessage(session_id: string, message: string): Promise<FilingSessionResponse> {
+  return apiFetch<FilingSessionResponse>("/filing/message", { method: "POST", body: JSON.stringify({ session_id, message }) });
+}
+
+export async function generateFilingDraft(session_id: string): Promise<FilingDraftResponse> {
+  return apiFetch<FilingDraftResponse>(`/filing/${session_id}/generate-draft`, { method: "POST" });
+}
+
+export async function searchPriorArt(profile: InventionProfile): Promise<PriorArtSearchResponse> {
+  return apiFetch<PriorArtSearchResponse>("/prior-art/search", { method: "POST", body: JSON.stringify({ profile }) });
+}
+
+export async function scoreReadiness(profile: InventionProfile, draft?: FilingDraftResponse, prior_art_results: PriorArtResult[] = []): Promise<ReadinessResponse> {
+  return apiFetch<ReadinessResponse>("/readiness/score", { method: "POST", body: JSON.stringify({ profile, draft, prior_art_results }) });
 }
 
 // ============================================================
@@ -730,7 +834,7 @@ export async function saveIOTDeviceLink(linkData: IOTDeviceProductLink): Promise
 }
 
 /** Trigger simulation tick for hackathon demo mode */
-export async function triggerIOTDemoTick(forceDeviation: boolean = false): Promise<any> {
-  return apiFetch<any>(`/iot/demo-tick?force_deviation=${forceDeviation}`, { method: "POST" });
+export async function triggerIOTDemoTick(forceDeviation: boolean = false): Promise<{ status: string }> {
+  return apiFetch<{ status: string }>(`/iot/demo-tick?force_deviation=${forceDeviation}`, { method: "POST" });
 }
 

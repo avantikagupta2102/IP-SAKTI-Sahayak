@@ -22,10 +22,10 @@ class Settings(BaseSettings):
     llm_provider: str = "ollama"
 
     # Ollama settings
-    ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "llama3.2"  # or llama3, mistral, qwen2.5, phi3, etc.
+    ollama_base_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = "qwen2.5:7b"
     ollama_api_key: str = ""        # optional API key / Bearer token for remote Ollama
-    ollama_timeout_seconds: float = 120.0
+    ollama_timeout_seconds: float = 300.0
 
     # Anthropic settings (optional fallback)
     anthropic_api_key: str = ""

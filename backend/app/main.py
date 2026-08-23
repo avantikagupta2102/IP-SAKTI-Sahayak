@@ -18,7 +18,8 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.core.database import init_db
-from app.routers import calendar, chat, document, expert_brief, feedback, investor_match, iot, multilingual, profile, regulations, sources, tk_risk, upload
+from app.services.ollama import check_ollama
+from app.routers import calendar, chat, document, expert_brief, feedback, filing, investor_match, iot, multilingual, profile, regulations, sources, tk_risk, upload
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -114,28 +115,16 @@ async def health():
     ollama_connected = False
     active_model = settings.ollama_model
 
-    if provider == "ollama":
-        try:
-            headers = {}
-            if settings.ollama_api_key:
-                headers["Authorization"] = f"Bearer {settings.ollama_api_key}"
-            with httpx.Client(timeout=1.5) as client:
-                r = client.get(f"{settings.ollama_base_url.rstrip('/')}/api/tags", headers=headers)
-                if r.status_code == 200:
-                    ollama_connected = True
-        except Exception:
-            ollama_connected = False
+    ollama_status = check_ollama() if provider == "ollama" else None
+    if ollama_status:
+        ollama_connected = ollama_status["status"] in {"ready", "model_missing"}
 
     llm_configured = (provider == "ollama" and ollama_connected) or (
         provider == "anthropic" and bool(settings.anthropic_api_key)
     )
 
     if provider == "ollama":
-        msg = (
-            f"Ollama connected ({active_model})."
-            if ollama_connected
-            else f"Ollama not detected on {settings.ollama_base_url}. Start Ollama with 'ollama run {active_model}'."
-        )
+        msg = ollama_status["message"] if ollama_status else "Ollama is unavailable."
     else:
         msg = "Anthropic API ready." if bool(settings.anthropic_api_key) else "Anthropic API key not configured."
 
@@ -147,7 +136,14 @@ async def health():
         "llm_configured": llm_configured,
         "kb_chunk_count": chunk_count,
         "message": msg,
+        "ai_status": ollama_status["status"] if ollama_status else "unavailable",
     }
+
+
+@app.get("/api/ai/health", tags=["system"], summary="Check local AI service")
+async def ai_health():
+    """Return whether Ollama is reachable and the configured model is installed."""
+    return check_ollama()
 
 
 # ---------------------------------------------------------------------------
@@ -165,4 +161,5 @@ app.include_router(calendar.router, prefix="/api", tags=["calendar"])
 app.include_router(expert_brief.router, prefix="/api", tags=["expert-brief"])
 app.include_router(investor_match.router, prefix="/api", tags=["investor-match"])
 app.include_router(multilingual.router, prefix="/api", tags=["multilingual"])
+app.include_router(filing.router, prefix="/api", tags=["filing-assistant"])
 app.include_router(iot.router, prefix="/api/iot", tags=["iot"])

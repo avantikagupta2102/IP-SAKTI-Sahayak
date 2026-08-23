@@ -178,6 +178,17 @@ export default function AppShell({ children }: Props) {
               <MessageSquare size={18} className={pathname === "/chat" ? "text-emerald-400" : ""} />
               <span>{t("ask_ai_advisor", "Ask AI Advisor")}</span>
             </button>
+            <button
+              onClick={() => router.push("/filing-assistant")}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                pathname === "/filing-assistant"
+                  ? "bg-emerald-700/40 text-emerald-300 border border-emerald-600/50 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+              }`}
+            >
+              <Sparkles size={18} className={pathname === "/filing-assistant" ? "text-emerald-400" : ""} />
+              <span>Filing Assistant</span>
+            </button>
           </nav>
 
           {/* Active User Context Badge */}
@@ -224,6 +235,8 @@ export default function AppShell({ children }: Props) {
                 ? t("compliance_passport", "Compliance Passport & Audit Trail")
                 : pathname === "/alerts"
                 ? t("alerts_page", "Notifications & Statutory Alerts")
+                : pathname === "/filing-assistant"
+                ? "AI Filing Assistant"
                 : t("ask_ai_advisor", "AI Legal & AYUSH Consultation")}
             </h2>
           </div>

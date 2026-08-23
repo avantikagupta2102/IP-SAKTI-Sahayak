@@ -149,6 +149,104 @@ class ErrorResponse(BaseModel):
 
 
 # ============================================================
+# AI Filing Assistant, Prior Art & IP Readiness
+# ============================================================
+
+
+class InventionProfile(BaseModel):
+    title: str = ""
+    technical_field: str = ""
+    problem_statement: str = ""
+    existing_approach: str = ""
+    proposed_solution: str = ""
+    novel_features: List[str] = Field(default_factory=list)
+    components: List[str] = Field(default_factory=list)
+    working_principle: str = ""
+    process_steps: List[str] = Field(default_factory=list)
+    advantages: List[str] = Field(default_factory=list)
+    applications: List[str] = Field(default_factory=list)
+    differentiators: List[str] = Field(default_factory=list)
+
+
+class FilingStartRequest(BaseModel):
+    description: str = Field(..., min_length=1, max_length=10000)
+
+
+class FilingMessageRequest(BaseModel):
+    session_id: str = Field(..., min_length=1)
+    message: str = Field(..., min_length=1, max_length=10000)
+
+
+class FilingSessionResponse(BaseModel):
+    session_id: str
+    profile: InventionProfile
+    question: Optional[str] = None
+    missing_fields: List[str] = Field(default_factory=list)
+    progress: int = Field(ge=0, le=100)
+    ai_available: bool = True
+
+
+class FilingDraftResponse(BaseModel):
+    session_id: str
+    profile: InventionProfile
+    title: str
+    abstract: str
+    technical_field: str
+    background: str
+    summary: str
+    detailed_description: str
+    key_features: List[str] = Field(default_factory=list)
+    advantages: List[str] = Field(default_factory=list)
+    claim_concepts: List[str] = Field(default_factory=list)
+    disclaimer: str = "AI-generated preliminary draft — requires review by a qualified IP professional."
+
+
+class PriorArtSearchRequest(BaseModel):
+    profile: InventionProfile
+    top_k: int = Field(default=6, ge=1, le=20)
+
+
+class PriorArtResult(BaseModel):
+    title: str
+    source: str
+    document_id: str
+    similarity_score: float = Field(ge=0, le=100)
+    matching_concepts: List[str] = Field(default_factory=list)
+    overlapping_features: List[str] = Field(default_factory=list)
+    distinguishing_features: List[str] = Field(default_factory=list)
+    explanation: str
+    corpus_label: str = "Indexed local document"
+
+
+class PriorArtSearchResponse(BaseModel):
+    query_representation: str
+    corpus_count: int
+    results: List[PriorArtResult] = Field(default_factory=list)
+    disclaimer: str = "AI-assisted preliminary similarity analysis. This is not a legal determination."
+
+
+class ReadinessRequest(BaseModel):
+    profile: InventionProfile
+    draft: Optional[FilingDraftResponse] = None
+    prior_art_results: List[PriorArtResult] = Field(default_factory=list)
+
+
+class ReadinessDimension(BaseModel):
+    name: str
+    score: int = Field(ge=0, le=100)
+    rationale: str
+
+
+class ReadinessResponse(BaseModel):
+    score: int = Field(ge=0, le=100)
+    dimensions: List[ReadinessDimension]
+    strengths: List[str] = Field(default_factory=list)
+    missing_information: List[str] = Field(default_factory=list)
+    recommended_next_steps: List[str] = Field(default_factory=list)
+    disclaimer: str = "AI-assisted preliminary assessment. This is not a legal determination."
+
+
+# ============================================================
 # Business Profile & Compliance Passport Schemas
 # ============================================================
 
