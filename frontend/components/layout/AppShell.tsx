@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { getUser, clearUser, UserProfile } from "@/lib/auth";
 import LanguageSelector from "@/components/shared/LanguageSelector";
+import NotificationDropdown from "@/components/layout/NotificationDropdown";
 import StatusDot from "@/components/shared/StatusDot";
 import HistorySidebar from "@/components/chat/HistorySidebar";
 
@@ -221,11 +222,16 @@ export default function AppShell({ children }: Props) {
                 ? t("smart_iot_compliance", "Smart IoT Compliance & Evidence Monitoring")
                 : pathname === "/passport"
                 ? t("compliance_passport", "Compliance Passport & Audit Trail")
+                : pathname === "/alerts"
+                ? t("alerts_page", "Notifications & Statutory Alerts")
                 : t("ask_ai_advisor", "AI Legal & AYUSH Consultation")}
             </h2>
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Notification Bell Dropdown */}
+            <NotificationDropdown />
+
             {/* Multilingual Selector */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-500">{t("language_label", "Language:")}</span>
